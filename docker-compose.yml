@@ -18,14 +18,11 @@ services:
       BLUEPRINT_DB_USERNAME: ${BLUEPRINT_DB_USERNAME}
       BLUEPRINT_DB_PASSWORD: ${BLUEPRINT_DB_PASSWORD}
     networks:
-      blueprint:
-        external: true
-        name: lpr-network      # <-- external network shared with Postgres / other services
+      - lpr-network   # ✅ just reference the network name
 
 volumes:
   postgres_data_bp:
 
 networks:
-  blueprint:
-    external: true
-    name: lpr-network
+  lpr-network:
+    external: true   # ✅ define external network only at top level

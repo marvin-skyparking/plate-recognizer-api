@@ -13,17 +13,12 @@ services:
       - license:/license
     restart: unless-stopped
 
-
     networks:
-      default:
-        external: true
-        name: lpr-network
+      - lpr-network   # ✅ just reference the network name here
 
 volumes:
   license:
 
-
 networks:
-  default:
-    external: true
-    name: lpr-network
+  lpr-network:
+    external: true   # ✅ define external network at top level only

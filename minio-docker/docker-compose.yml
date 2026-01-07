@@ -7,8 +7,8 @@ services:
     restart: unless-stopped
 
     ports:
-      - "9000:9000"   # S3 API (used by LPR service)
-      - "9001:9001"   # MinIO Console
+      - "9000:9000"
+      - "9001:9001"
 
     environment:
       MINIO_ROOT_USER: lpradmin
@@ -32,14 +32,11 @@ services:
       retries: 3
 
     networks:
-      default:
-        external: true
-        name: lpr-network   # <-- join the same external network
+      - lpr-network   # just list the network name
 
 volumes:
   minio_lpr_data:
 
 networks:
-  default:
-    external: true
-    name: lpr-network
+  lpr-network:
+    external: true   # external network defined at top level
