@@ -1,65 +1,105 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"os"
-	"os/signal"
+	"plate-recognizer-api/config"
 	"plate-recognizer-api/internal/server"
-	"strconv"
-	"syscall"
-	"time"
+	"plate-recognizer-api/model"
 
-	_ "github.com/joho/godotenv/autoload"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
-func gracefulShutdown(fiberServer *server.FiberServer, done chan bool) {
-	// Create context that listens for the interrupt signal from the OS.
-	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
-	defer stop()
+func main() {
+	env := config.LoadEnv()
 
-	// Listen for the interrupt signal.
-	<-ctx.Done()
-
-	log.Println("shutting down gracefully, press Ctrl+C again to force")
-	stop() // Allow Ctrl+C to force shutdown
-
-	// The context is used to inform the server it has 5 seconds to finish
-	// the request it is currently handling
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	if err := fiberServer.ShutdownWithContext(ctx); err != nil {
-		log.Printf("Server forced to shutdown with error: %v", err)
+	// Build DSN
+	dsn := fmt.Sprintf(
+		"host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=UTC",
+		env.DBHost,
+		env.DBUser,
+		env.DBPassword,
+		env.DBName,
+		env.DBPort,
+	)
+	// Connect to DB (enable Info logging to capture SQL and params)
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
+		Logger: logger.Default.LogMode(logger.Info),
+	})
+	if err != nil {
+		log.Fatalf("failed to connect db: %v", err)
 	}
 
-	log.Println("Server exiting")
+	// Ensure DB connection is usable (ping)
+	sqlDB, err := db.DB()
+	if err != nil {
+		log.Fatalf("failed to get sql DB from gorm: %v", err)
+	}
+	if err := sqlDB.Ping(); err != nil {
+		log.Fatalf("db ping failed: %v", err)
+	}
 
-	// Notify the main goroutine that the shutdown is complete
-	done <- true
-}
+	// Optional diagnostics — set DB_DIAG=1 to run
+	if os.Getenv("DB_DIAG") == "1" {
+		log.Println("DB_DIAG: running database diagnostics...")
 
-func main() {
-
-	server := server.New()
-
-	server.RegisterFiberRoutes()
-
-	// Create a done channel to signal when the shutdown is complete
-	done := make(chan bool, 1)
-
-	go func() {
-		port, _ := strconv.Atoi(os.Getenv("PORT"))
-		err := server.Listen(fmt.Sprintf(":%d", port))
-		if err != nil {
-			panic(fmt.Sprintf("http server error: %s", err))
+		// Simple driver-level check
+		var one int
+		if err := sqlDB.QueryRow("SELECT 1").Scan(&one); err != nil {
+			log.Printf("DB_DIAG: driver SELECT 1 failed: %v", err)
+		} else {
+			log.Printf("DB_DIAG: driver SELECT 1 OK: %d", one)
 		}
-	}()
 
-	// Run graceful shutdown in a separate goroutine
-	go gracefulShutdown(server, done)
+		// GORM Raw with ? placeholder
+		var rowsCount int64
+		err := db.Raw("SELECT count(*) FROM \"plate_logs\" LIMIT ?", 1).Scan(&rowsCount).Error
+		if err != nil {
+			log.Printf("DB_DIAG: gorm Raw with ?: %v", err)
+		} else {
+			log.Printf("DB_DIAG: gorm Raw with ? OK: %d", rowsCount)
+		}
 
-	// Wait for the graceful shutdown to complete
-	<-done
-	log.Println("Graceful shutdown complete.")
+		// GORM Raw with $1 placeholder
+		err = db.Raw("SELECT count(*) FROM \"plate_logs\" LIMIT $1", 1).Scan(&rowsCount).Error
+		if err != nil {
+			log.Printf("DB_DIAG: gorm Raw with $1: %v", err)
+		} else {
+			log.Printf("DB_DIAG: gorm Raw with $1 OK: %d", rowsCount)
+		}
+	}
+
+	// Safe migration: create tables only if missing to avoid SELECT LIMIT issues
+	log.Println(">>> running safe table creation (create if missing)")
+	tables := []interface{}{
+		&model.PlateLog{},
+		&model.User{},
+	}
+	for _, t := range tables {
+		if !db.Migrator().HasTable(t) {
+			log.Printf("creating table for %T", t)
+			if err := db.Migrator().CreateTable(t); err != nil {
+				log.Fatalf("create table failed for %T: %v", t, err)
+			}
+		} else {
+			log.Printf("table already exists for %T, skipping CreateTable", t)
+			// For existing tables, ensure new columns exist (add if missing)
+			if _, ok := t.(*model.PlateLog); ok {
+				if !db.Migrator().HasColumn(&model.PlateLog{}, "ImageURL") {
+					log.Println("adding ImageURL column to plate_logs")
+					if err := db.Migrator().AddColumn(&model.PlateLog{}, "ImageURL"); err != nil {
+						log.Fatalf("failed to add ImageURL column: %v", err)
+					}
+				}
+			}
+		}
+	}
+	// Initialize Fiber server
+	s := server.New(env, db)
+
+	log.Printf("Server running on port %s\n", env.Port)
+	log.Fatal(s.App.Listen(":" + env.Port))
 }

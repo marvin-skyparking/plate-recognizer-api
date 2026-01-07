@@ -1,26 +1,34 @@
 package server
 
 import (
-	"github.com/gofiber/fiber/v2"
+	"log"
+	"plate-recognizer-api/config"
 
-	"plate-recognizer-api/internal/database"
+	"github.com/gofiber/fiber/v2"
+	"gorm.io/gorm"
 )
 
 type FiberServer struct {
-	*fiber.App
-
-	db database.Service
+	App *fiber.App
+	Env *config.Env
+	DB  *gorm.DB
 }
 
-func New() *FiberServer {
-	server := &FiberServer{
-		App: fiber.New(fiber.Config{
-			ServerHeader: "plate-recognizer-api",
-			AppName:      "plate-recognizer-api",
-		}),
+// New creates a new FiberServer and requires db as argument
+func New(env *config.Env, db *gorm.DB) *FiberServer {
+	app := fiber.New()
 
-		db: database.New(),
+	// Check if db is nil
+	if db == nil {
+		log.Fatal("database connection is nil")
 	}
 
+	server := &FiberServer{
+		App: app,
+		Env: env,
+		DB:  db, // assign DB properly
+	}
+
+	server.RegisterRoutes()
 	return server
 }
