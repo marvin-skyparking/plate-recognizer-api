@@ -1,3 +1,5 @@
+version: "3.8"
+
 services:
   app:
     build:
@@ -6,41 +8,24 @@ services:
       target: prod
     restart: unless-stopped
     ports:
-      - ${PORT}:${PORT}
+      - "${PORT}:${PORT}"
     environment:
       APP_ENV: ${APP_ENV}
       PORT: ${PORT}
-      BLUEPRINT_DB_HOST: ${BLUEPRINT_DB_HOST}
-      BLUEPRINT_DB_PORT: ${BLUEPRINT_DB_PORT}
+      BLUEPRINT_DB_HOST: ${BLUEPRINT_DB_HOST}       # e.g., lpr-postgres
+      BLUEPRINT_DB_PORT: ${BLUEPRINT_DB_PORT}       # e.g., 5432
       BLUEPRINT_DB_DATABASE: ${BLUEPRINT_DB_DATABASE}
       BLUEPRINT_DB_USERNAME: ${BLUEPRINT_DB_USERNAME}
       BLUEPRINT_DB_PASSWORD: ${BLUEPRINT_DB_PASSWORD}
-    # depends_on:
-    #   postgres_bp:
-    #     condition: service_healthy
     networks:
-      - blueprint
-  # postgres_bp:
-  #   image: postgres:15
-  #   restart: unless-stopped
-  #   environment:
-  #     POSTGRES_DB: ${BLUEPRINT_DB_DATABASE}
-  #     POSTGRES_USER: ${BLUEPRINT_DB_USERNAME}
-  #     POSTGRES_PASSWORD: ${BLUEPRINT_DB_PASSWORD}
-  #   ports:
-  #     - "${BLUEPRINT_DB_PORT}:5432"
-  #   volumes:
-  #     - postgres_data_bp:/var/lib/postgresql/data
-  #   healthcheck:
-  #     test: ["CMD-SHELL", "pg_isready -U ${BLUEPRINT_DB_USERNAME} -d ${BLUEPRINT_DB_DATABASE} -h ${BLUEPRINT_DB_HOST} -p ${BLUEPRINT_DB_PORT}"]
-  #     interval: 5s
-  #     timeout: 5s
-  #     retries: 5
-  #     start_period: 15s
-  #   networks:
-  #     - blueprint
+      blueprint:
+        external: true
+        name: lpr-network      # <-- external network shared with Postgres / other services
 
 volumes:
   postgres_data_bp:
+
 networks:
   blueprint:
+    external: true
+    name: lpr-network

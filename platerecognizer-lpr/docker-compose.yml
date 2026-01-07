@@ -13,5 +13,17 @@ services:
       - license:/license
     restart: unless-stopped
 
+
+    networks:
+      default:
+        external: true
+        name: lpr-network
+
 volumes:
   license:
+
+
+networks:
+  default:
+    external: true
+    name: lpr-network
