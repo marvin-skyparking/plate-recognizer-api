@@ -8,7 +8,7 @@ services:
       - "8080:8080"
     environment:
       TOKEN: 2ee83fb34e74d1bd32772ac11129862e8f8161e1
-      LICENSE_KEY: FLAyQTqfzh
+      LICENSE_KEY: 6Y9MuwHA8S
     volumes:
       - license:/license
     restart: unless-stopped
