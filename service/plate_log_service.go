@@ -71,23 +71,18 @@ func RecognizeAndSavePlateLog(
 	log.Println("MINIO_USE_SSL =", os.Getenv("MINIO_USE_SSL"))
 
 	minioBucket := os.Getenv("MINIO_BUCKET_IMAGE_LPR")
-	if minioBucket == "" {
-		log.Println("MinIO bucket not set, skipping upload")
-	} else {
 
+	if minioBucket != "" {
 		mc, err := minio.New()
 		if err != nil {
 			log.Printf("MinIO init failed: %v", err)
 		} else {
-
 			objName := fmt.Sprintf(
 				"%s-%d-%s",
 				cameraID,
 				time.Now().Unix(),
 				filepath.Base(imagePath),
 			)
-
-			log.Println("Uploading image to MinIO:", objName)
 
 			url, err := mc.UploadFile(
 				context.Background(),
@@ -98,7 +93,6 @@ func RecognizeAndSavePlateLog(
 			if err != nil {
 				log.Printf("MinIO upload failed: %v", err)
 			} else {
-				log.Println("MinIO upload success:", url)
 				requestMeta["image_url"] = url
 			}
 		}
