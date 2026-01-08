@@ -55,7 +55,7 @@ func Recognize(token, imagePath, mmc, cameraID string) (string, float64, error) 
 
 	req, err := http.NewRequest(
 		http.MethodPost,
-		"http://localhost:8080/v1/plate-reader/",
+		"http://plate-recognizer:8080/v1/plate-reader/",
 		&body,
 	)
 	if err != nil {
