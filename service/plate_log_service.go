@@ -32,7 +32,7 @@ func RecognizeAndSavePlateLog(
 	mmc string,
 ) (*FinalResponse, error) {
 
-	// ✅ Call directly (NO import service)
+	// --- Call plate recognizer ---
 	plate, score, err := Recognize(
 		token,
 		imagePath,
@@ -55,34 +55,61 @@ func RecognizeAndSavePlateLog(
 		},
 	}
 
-	// Prepare request metadata
+	// --- Request metadata ---
 	requestMeta := map[string]string{
 		"location_code": locationCode,
 		"camera_id":     cameraID,
 		"mmc":           mmc,
 	}
 
-	// Try to upload image to MinIO (optional)
+	// ======================================================
+	// ================= MINIO UPLOAD =======================
+	// ======================================================
+
+	log.Println("MINIO_ENDPOINT =", os.Getenv("MINIO_ENDPOINT"))
+	log.Println("MINIO_BUCKET_IMAGE_LPR =", os.Getenv("MINIO_BUCKET_IMAGE_LPR"))
+	log.Println("MINIO_USE_SSL =", os.Getenv("MINIO_USE_SSL"))
+
 	minioBucket := os.Getenv("MINIO_BUCKET_IMAGE_LPR")
-	if minioBucket != "" {
-		if mc, err := minio.New(); err == nil {
-			objName := fmt.Sprintf("%s-%d-%s", cameraID, time.Now().Unix(), filepath.Base(imagePath))
-			if url, err := mc.UploadFile(context.Background(), minioBucket, objName, imagePath); err == nil {
-				requestMeta["image_url"] = url
-			} else {
-				log.Printf("MinIO upload failed: %v", err)
-			}
+	if minioBucket == "" {
+		log.Println("MinIO bucket not set, skipping upload")
+	} else {
+
+		mc, err := minio.New()
+		if err != nil {
+			log.Printf("MinIO init failed: %v", err)
 		} else {
-			log.Printf("MinIO client init failed: %v", err)
+
+			objName := fmt.Sprintf(
+				"%s-%d-%s",
+				cameraID,
+				time.Now().Unix(),
+				filepath.Base(imagePath),
+			)
+
+			log.Println("Uploading image to MinIO:", objName)
+
+			url, err := mc.UploadFile(
+				context.Background(),
+				minioBucket,
+				objName,
+				imagePath,
+			)
+			if err != nil {
+				log.Printf("MinIO upload failed: %v", err)
+			} else {
+				log.Println("MinIO upload success:", url)
+				requestMeta["image_url"] = url
+			}
 		}
-		log.Println("MINIO_ENDPOINT =", os.Getenv("MINIO_ENDPOINT"))
 	}
 
-	requestJSON, _ := json.Marshal(requestMeta)
+	// ======================================================
 
+	requestJSON, _ := json.Marshal(requestMeta)
 	responseFinalJSON, _ := json.Marshal(finalResp)
 
-	log := model.PlateLog{
+	plateLog := model.PlateLog{
 		LocationCode:  locationCode,
 		CameraID:      cameraID,
 		Plate:         plate,
@@ -93,13 +120,13 @@ func RecognizeAndSavePlateLog(
 		ImageURL:      requestMeta["image_url"],
 	}
 
-	if err := db.Create(&log).Error; err != nil {
+	if err := db.Create(&plateLog).Error; err != nil {
 		return nil, err
 	}
 
-	// Update request_data with potential image_url
+	// Update request_data (with image_url if exists)
 	if reqJSON2, err := json.Marshal(requestMeta); err == nil {
-		db.Model(&log).Update("request_data", string(reqJSON2))
+		db.Model(&plateLog).Update("request_data", string(reqJSON2))
 	}
 
 	return &finalResp, nil
