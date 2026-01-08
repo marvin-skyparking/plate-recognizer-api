@@ -75,6 +75,7 @@ func RecognizeAndSavePlateLog(
 		} else {
 			log.Printf("MinIO client init failed: %v", err)
 		}
+		log.Println("MINIO_ENDPOINT =", os.Getenv("MINIO_ENDPOINT"))
 	}
 
 	requestJSON, _ := json.Marshal(requestMeta)
