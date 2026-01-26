@@ -22,7 +22,7 @@ services:
       - "8081:8080"   # ✅ different HOST port
     environment:
       TOKEN: 2ee83fb34e74d1bd32772ac11129862e8f8161e1
-      LICENSE_KEY: 6Y9MuwHA8S
+      LICENSE_KEY: FLAyQTqfzh
     volumes:
       - license2:/license
     restart: unless-stopped
