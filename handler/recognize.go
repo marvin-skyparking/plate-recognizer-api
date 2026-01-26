@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"fmt"
 	"os"
 
 	"plate-recognizer-api/service"
@@ -38,6 +39,7 @@ func (h *RecognizeHandler) Recognize(c *fiber.Ctx) error {
 
 	locationCode := c.FormValue("location_code")
 	cameraID := c.FormValue("camera_id")
+	transactionNo := c.FormValue("transaction_no")
 	mmc := c.FormValue("mmc")
 
 	if locationCode == "" || cameraID == "" {
@@ -75,11 +77,13 @@ func (h *RecognizeHandler) Recognize(c *fiber.Ctx) error {
 	// ==========================
 	// CALL SERVICE (SAVE TO DB)
 	// ==========================
+	fmt.Print(transactionNo)
 	resp, err := service.RecognizeAndSavePlateLog(
 		h.DB,
 		h.Token,
 		tmp.Name(),
 		locationCode,
+		transactionNo,
 		cameraID,
 		mmc,
 	)

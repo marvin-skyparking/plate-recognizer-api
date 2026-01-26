@@ -9,8 +9,11 @@ import (
 	"mime/multipart"
 	"net/http"
 	"os"
+	"plate-recognizer-api/utils"
 	"time"
 )
+
+var rrCounter uint64
 
 type Response struct {
 	Results []struct {
@@ -19,7 +22,7 @@ type Response struct {
 	} `json:"results"`
 }
 
-func Recognize(token, imagePath, mmc, cameraID string) (string, float64, error) {
+func Recognize(token, imagePath, mmc, cameraID string, transactionNo string) (string, float64, error) {
 	start := time.Now()
 
 	// Log execution time
@@ -53,15 +56,46 @@ func Recognize(token, imagePath, mmc, cameraID string) (string, float64, error) 
 
 	_ = writer.Close()
 
+	// Round-robin selection between two endpoints
+	// endpoints := [2]string{
+	// 	"http://plate-recognizer:8080/v1/plate-reader/",
+	// 	"http://plate-recognizer:8081/v1/plate-reader/",
+	// }
+	// endpoints := [2]string{
+	// 	"http://localhost:8080/v1/plate-reader/",
+	// 	"http://localhost:8081/v1/plate-reader/",
+	// }
+	// idx := atomic.AddUint64(&rrCounter, 1) % 2
+	// url := endpoints[idx]
+
+	// req, err := http.NewRequest(
+	// 	http.MethodPost,
+	// 	url,
+	// 	&body,
+	// )
+	// if err != nil {
+	// 	return "", 0, err
+	// }
+
+	// 1️⃣ get healthy endpoint
+	url, err := utils.GetHealthyPlateReaderURL()
+	if err != nil {
+		return "", 0, err
+	}
+
+	log.Println("🚀 Sending request to:", url)
+
+	// 2️⃣ create request (IMPORTANT)
 	req, err := http.NewRequest(
 		http.MethodPost,
-		"http://plate-recognizer:8080/v1/plate-reader/",
+		url,
 		&body,
 	)
 	if err != nil {
 		return "", 0, err
 	}
 
+	// 3️⃣ set headers AFTER request is created
 	req.Header.Set("Authorization", "Token "+token)
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 
@@ -75,6 +109,7 @@ func Recognize(token, imagePath, mmc, cameraID string) (string, float64, error) 
 	log.Println("Timestamp :", timestamp)
 	log.Println("Body size :", body.Len(), "bytes")
 
+	// 4️⃣ send request
 	client := &http.Client{
 		Timeout: 15 * time.Second,
 	}

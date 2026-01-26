@@ -1,24 +1,38 @@
 version: "3.8"
 
 services:
-  plate-recognizer:
+  plate-recognizer-1:
     image: platerecognizer/alpr
-    container_name: plate-recognizer
+    container_name: plate-recognizer-1
     ports:
       - "8080:8080"
     environment:
       TOKEN: 2ee83fb34e74d1bd32772ac11129862e8f8161e1
-      LICENSE_KEY: ZxJVDczA7p
+      LICENSE_KEY: zfK79uRXbg
     volumes:
-      - license:/license
+      - license1:/license
     restart: unless-stopped
-
     networks:
-      - lpr-network   # ✅ just reference the network name here
+      - lpr-network
+
+  plate-recognizer-2:
+    image: platerecognizer/alpr
+    container_name: plate-recognizer-2
+    ports:
+      - "8081:8080"   # ✅ different HOST port
+    environment:
+      TOKEN: 2ee83fb34e74d1bd32772ac11129862e8f8161e1
+      LICENSE_KEY: 6Y9MuwHA8S
+    volumes:
+      - license2:/license
+    restart: unless-stopped
+    networks:
+      - lpr-network
 
 volumes:
-  license:
+  license1:
+  license2:
 
 networks:
   lpr-network:
-    external: true   # ✅ define external network at top level only
+    external: true
