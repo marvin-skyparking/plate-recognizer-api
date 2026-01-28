@@ -10,10 +10,9 @@ services:
       - "5435:5432"
 
     environment:
-      POSTGRES_DB: skyroot
-      POSTGRES_USER: lpr_user
+      POSTGRES_DB: lpr_db
+      POSTGRES_USER: skyroot
       POSTGRES_PASSWORD: SkyParking@2026!
-
 
     volumes:
       - postgres_data:/var/lib/postgresql/data
