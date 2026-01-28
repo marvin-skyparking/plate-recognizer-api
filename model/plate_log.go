@@ -8,6 +8,7 @@ type PlateLog struct {
 	CameraID      string `gorm:"type:varchar(50);index"`
 	TransactionNo string `gorm:"type:varchar(100);index"`
 	Plate         string `gorm:"type:varchar(20);index"`
+	Accuracy      string `gorm:"type:varchar(10)"`
 	Timestamp     time.Time
 	RequestData   string `gorm:"type:text"`
 	ResponseData  string `gorm:"type:text"`

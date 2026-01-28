@@ -147,6 +147,7 @@ func RecognizeAndSavePlateLog(
 		TransactionNo: transactionNo,
 		Timestamp:     time.Now(),
 		RequestData:   string(requestJSON),
+		Accuracy:      fmt.Sprintf("%.2f", score),
 		ResponseData:  "",
 		ResponseFinal: string(responseFinalJSON),
 		ImageURL:      requestMeta["image_url"],
