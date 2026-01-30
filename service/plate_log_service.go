@@ -54,7 +54,7 @@ func RecognizeAndSavePlateLog(
 	plate = strings.ToUpper(plate)
 
 	// --- Call member service ---
-	resp, err := http.Get("backend_membership:5000/api/members/check-plat/" + plate)
+	resp, err := http.Get("http://backend_membership:5000/api/members/check-plat/" + plate)
 	if err != nil {
 		log.Println("Error checking member status:", err)
 		return nil, err
