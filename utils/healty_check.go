@@ -12,6 +12,8 @@ var rrCounter uint64
 var endpoints = []string{
 	"http://plate-recognizer-1:8080",
 	"http://plate-recognizer-2:8081",
+	"http://plate-recognizer-3:8082",
+	"http://plate-recognizer-4:8083",
 }
 
 func isHealthy(base string) bool {

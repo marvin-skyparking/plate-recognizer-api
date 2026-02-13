@@ -11,7 +11,7 @@ type PlateLog struct {
 	Accuracy      string `gorm:"type:varchar(10)"`
 	Timestamp     time.Time
 	RequestData   string `gorm:"type:text"`
-	ResponseData  string `gorm:"type:text"`
+	ResponseTime  string `gorm:"type:text"`
 	ResponseFinal string `gorm:"type:text"`
 	ImageURL      string `gorm:"type:text" json:"image_url"`
 	CreatedAt     time.Time

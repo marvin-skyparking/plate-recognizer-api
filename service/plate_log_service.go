@@ -39,6 +39,8 @@ func RecognizeAndSavePlateLog(
 	mmc string,
 ) (*FinalResponse, error) {
 
+	start := time.Now() // ✅ Start timer
+
 	// --- Call plate recognizer ---
 	plate, score, err := Recognize(
 		token,
@@ -140,6 +142,8 @@ func RecognizeAndSavePlateLog(
 	requestJSON, _ := json.Marshal(requestMeta)
 	responseFinalJSON, _ := json.Marshal(finalResp)
 
+	elapsed := time.Since(start)
+
 	plateLog := model.PlateLog{
 		LocationCode:  locationCode,
 		CameraID:      cameraID,
@@ -148,7 +152,7 @@ func RecognizeAndSavePlateLog(
 		Timestamp:     time.Now(),
 		RequestData:   string(requestJSON),
 		Accuracy:      fmt.Sprintf("%.2f", score),
-		ResponseData:  "",
+		ResponseTime:  fmt.Sprintf("%dms", elapsed.Milliseconds()),
 		ResponseFinal: string(responseFinalJSON),
 		ImageURL:      requestMeta["image_url"],
 	}
