@@ -3,14 +3,12 @@ package utils
 import (
 	"errors"
 	"net/http"
-	"strings"
 	"sync/atomic"
 	"time"
 )
 
 var rrCounter uint64
 
-// Most Docker setups use same internal port
 var endpoints = []string{
 	"http://plate-recognizer-1:8080",
 	"http://plate-recognizer-2:8080",
@@ -18,14 +16,18 @@ var endpoints = []string{
 	"http://plate-recognizer-4:8080",
 }
 
-var client = &http.Client{
-	Timeout: 2 * time.Second,
-}
-
 func isHealthy(base string) bool {
-	url := base + "/v1/plate-reader/"
+	client := http.Client{
+		Timeout: 2 * time.Second,
+	}
 
-	req, err := http.NewRequest(http.MethodHead, url, nil)
+	// Plate Recognizer does NOT have /health
+	// Use HEAD or GET to plate-reader endpoint
+	req, err := http.NewRequest(
+		http.MethodHead,
+		base+"/v1/plate-reader/",
+		nil,
+	)
 	if err != nil {
 		return false
 	}
@@ -36,18 +38,8 @@ func isHealthy(base string) bool {
 	}
 	defer resp.Body.Close()
 
-	// must not be server error
-	if resp.StatusCode >= 500 {
-		return false
-	}
-
-	// reject HTML responses (proxy/error page)
-	ct := resp.Header.Get("Content-Type")
-	if ct != "" && !strings.Contains(ct, "application/json") {
-		return false
-	}
-
-	return true
+	// 200 / 401 / 405 all mean "service is alive"
+	return resp.StatusCode < 500
 }
 
 func GetHealthyPlateReaderURL() (string, error) {
