@@ -14,6 +14,7 @@ var endpoints = []string{
 	"http://plate-recognizer-2:8080",
 	"http://plate-recognizer-3:8080",
 	"http://plate-recognizer-4:8080",
+	"http://plate-recognizer-5:8080",
 }
 
 func isHealthy(base string) bool {
