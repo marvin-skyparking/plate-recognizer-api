@@ -15,7 +15,7 @@ services:
       POSTGRES_PASSWORD: SkyParking@2026!
 
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - lpr_postgres_data:/var/lib/postgresql/data
 
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U lpr_user -d lpr_db"]
@@ -27,7 +27,7 @@ services:
       - lpr-network   # just list the network name here
 
 volumes:
-  postgres_data:
+ lpr_postgres_data:
 
 networks:
   lpr-network:
