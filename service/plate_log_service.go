@@ -5,7 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"net/http"
+
+	// "net/http"
 	"os"
 	"path/filepath"
 	"plate-recognizer-api/internal/minio"
@@ -16,11 +17,11 @@ import (
 	"gorm.io/gorm"
 )
 
-type MemberCheckResponse struct {
-	Data struct {
-		Category string `json:"category"`
-	} `json:"data"`
-}
+// type MemberCheckResponse struct {
+// 	Data struct {
+// 		Category string `json:"category"`
+// 	} `json:"data"`
+// }
 
 type FinalResponse struct {
 	Status  int         `json:"status"`
@@ -53,42 +54,42 @@ func RecognizeAndSavePlateLog(
 
 	plate = strings.ToUpper(plate)
 
-	// --- Call member service ---
-	resp, err := http.Get("http://backend-app-local:5000/api/members/check-plat/" + plate)
-	if err != nil {
-		log.Println("Error checking member status:", err)
-		return nil, err
-	}
-	defer resp.Body.Close()
+	// // --- Call member service ---
+	// resp, err := http.Get("http://backend-app-local:5000/api/members/check-plat/" + plate)
+	// if err != nil {
+	// 	log.Println("Error checking member status:", err)
+	// 	return nil, err
+	// }
+	// defer resp.Body.Close()
 
-	log.Println("Member service HTTP status:", resp.StatusCode)
+	// log.Println("Member service HTTP status:", resp.StatusCode)
 
-	// --- Check HTTP status ---
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("member service returned %d", resp.StatusCode)
-	}
+	// // --- Check HTTP status ---
+	// if resp.StatusCode != http.StatusOK {
+	// 	return nil, fmt.Errorf("member service returned %d", resp.StatusCode)
+	// }
 
-	// ======================
-	// Decode JSON response
-	// ======================
-	var memberResp MemberCheckResponse
-	if err := json.NewDecoder(resp.Body).Decode(&memberResp); err != nil {
-		log.Println("JSON decode error:", err)
-		return nil, err
-	}
+	// // ======================
+	// // Decode JSON response
+	// // ======================
+	// var memberResp MemberCheckResponse
+	// if err := json.NewDecoder(resp.Body).Decode(&memberResp); err != nil {
+	// 	log.Println("JSON decode error:", err)
+	// 	return nil, err
+	// }
 
-	if memberResp.Data.Category == "" {
-		memberResp.Data.Category = "CASUAL"
-	}
+	// if memberResp.Data.Category == "" {
+	// 	memberResp.Data.Category = "CASUAL"
+	// }
 
 	finalResp := FinalResponse{
 		Status:  200,
 		Message: "plate recognized successfully",
 		Code:    "SUCCESS",
 		Data: map[string]interface{}{
-			"plate":         plate,
-			"score":         score,
-			"status_member": memberResp.Data.Category,
+			"plate": plate,
+			"score": score,
+			// "status_member": memberResp.Data.Category,
 		},
 	}
 
