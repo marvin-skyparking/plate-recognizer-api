@@ -8,40 +8,40 @@ services:
       - "8080:8080"
     environment:
       TOKEN: 2ee83fb34e74d1bd32772ac11129862e8f8161e1
-      LICENSE_KEY: 3XWmvgy8vf
+      LICENSE_KEY: DMm92pJVh8
     volumes:
       - license1:/license
     restart: unless-stopped
     networks:
       - lpr-network
 
-  plate-recognizer-2:
-    image: platerecognizer/alpr:latest
-    container_name: plate-recognizer-2
-    ports:
-      - "8081:8080"
-    environment:
-      TOKEN: 2ee83fb34e74d1bd32772ac11129862e8f8161e1
-      LICENSE_KEY: Bwdbz3qCZT
-    volumes:
-      - license2:/license
-    restart: unless-stopped
-    networks:
-      - lpr-network
+  # plate-recognizer-2:
+  #   image: platerecognizer/alpr:latest
+  #   container_name: plate-recognizer-2
+  #   ports:
+  #     - "8081:8080"
+  #   environment:
+  #     TOKEN: 2ee83fb34e74d1bd32772ac11129862e8f8161e1
+  #     LICENSE_KEY: Bwdbz3qCZT
+  #   volumes:
+  #     - license2:/license
+  #   restart: unless-stopped
+  #   networks:
+  #     - lpr-network
 
-  plate-recognizer-3:
-    image: platerecognizer/alpr:latest
-    container_name: plate-recognizer-3
-    ports:
-      - "8082:8080"
-    environment:
-      TOKEN: 2ee83fb34e74d1bd32772ac11129862e8f8161e1
-      LICENSE_KEY: 7rBrneMXCW
-    volumes:
-      - license3:/license
-    restart: unless-stopped
-    networks:
-      - lpr-network
+  # plate-recognizer-3:
+  #   image: platerecognizer/alpr:latest
+  #   container_name: plate-recognizer-3
+  #   ports:
+  #     - "8082:8080"
+  #   environment:
+  #     TOKEN: 2ee83fb34e74d1bd32772ac11129862e8f8161e1
+  #     LICENSE_KEY: 7rBrneMXCW
+  #   volumes:
+  #     - license3:/license
+  #   restart: unless-stopped
+  #   networks:
+  #     - lpr-network
 
   # plate-recognizer-4:
   #   image: platerecognizer/alpr
@@ -73,8 +73,8 @@ services:
 
 volumes:
   license1:
-  license2:
-  license3:
+  # license2:
+  # license3:
   # license4:
   # license5:
 
