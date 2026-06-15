@@ -40,59 +40,6 @@ func RecognizeAndSavePlateLog(
 	mmc string,
 ) (*FinalResponse, error) {
 
-	// --- Call plate recognizer ---
-	plate, score, err := Recognize(
-		token,
-		imagePath,
-		mmc,
-		cameraID,
-		transactionNo,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	plate = strings.ToUpper(plate)
-
-	// // --- Call member service ---
-	// resp, err := http.Get("http://backend-app-local:5000/api/members/check-plat/" + plate)
-	// if err != nil {
-	// 	log.Println("Error checking member status:", err)
-	// 	return nil, err
-	// }
-	// defer resp.Body.Close()
-
-	// log.Println("Member service HTTP status:", resp.StatusCode)
-
-	// // --- Check HTTP status ---
-	// if resp.StatusCode != http.StatusOK {
-	// 	return nil, fmt.Errorf("member service returned %d", resp.StatusCode)
-	// }
-
-	// // ======================
-	// // Decode JSON response
-	// // ======================
-	// var memberResp MemberCheckResponse
-	// if err := json.NewDecoder(resp.Body).Decode(&memberResp); err != nil {
-	// 	log.Println("JSON decode error:", err)
-	// 	return nil, err
-	// }
-
-	// if memberResp.Data.Category == "" {
-	// 	memberResp.Data.Category = "CASUAL"
-	// }
-
-	finalResp := FinalResponse{
-		Status:  200,
-		Message: "plate recognized successfully",
-		Code:    "SUCCESS",
-		Data: map[string]interface{}{
-			"plate": plate,
-			"score": score,
-			// "status_member": memberResp.Data.Category,
-		},
-	}
-
 	// --- Request metadata ---
 	requestMeta := map[string]string{
 		"location_code": locationCode,
@@ -138,24 +85,75 @@ func RecognizeAndSavePlateLog(
 
 	// ======================================================
 
-	requestJSON, _ := json.Marshal(requestMeta)
-	responseFinalJSON, _ := json.Marshal(finalResp)
+	// --- Call plate recognizer ---
+	plate, score, err := Recognize(
+		token,
+		imagePath,
+		mmc,
+		cameraID,
+		transactionNo,
+	)
 
-	plateLog := model.PlateLog{
-		LocationCode:  locationCode,
-		CameraID:      cameraID,
-		Plate:         plate,
-		TransactionNo: transactionNo,
-		Timestamp:     time.Now(),
-		RequestData:   string(requestJSON),
-		Accuracy:      fmt.Sprintf("%.2f", score),
-		ResponseData:  "",
-		ResponseFinal: string(responseFinalJSON),
-		ImageURL:      requestMeta["image_url"],
+	requestJSON, _ := json.Marshal(requestMeta)
+	var finalResp FinalResponse
+	var plateLog model.PlateLog
+
+	// Handle recognition result (success or failure)
+	if err != nil {
+		log.Printf("Plate recognition failed: %v", err)
+		finalResp = FinalResponse{
+			Status:  500,
+			Message: fmt.Sprintf("plate recognition failed: %v", err),
+			Code:    "RECOGNITION_FAILED",
+			Data:    nil,
+		}
+		plateLog = model.PlateLog{
+			LocationCode:  locationCode,
+			CameraID:      cameraID,
+			Plate:         "",
+			TransactionNo: transactionNo,
+			Timestamp:     time.Now(),
+			RequestData:   string(requestJSON),
+			Accuracy:      "0",
+			ResponseData:  "",
+			ResponseFinal: "",
+			ImageURL:      requestMeta["image_url"],
+		}
+	} else {
+		plate = strings.ToUpper(plate)
+
+		finalResp = FinalResponse{
+			Status:  200,
+			Message: "plate recognized successfully",
+			Code:    "SUCCESS",
+			Data: map[string]interface{}{
+				"plate": plate,
+				"score": score,
+			},
+		}
+		plateLog = model.PlateLog{
+			LocationCode:  locationCode,
+			CameraID:      cameraID,
+			Plate:         plate,
+			TransactionNo: transactionNo,
+			Timestamp:     time.Now(),
+			RequestData:   string(requestJSON),
+			Accuracy:      fmt.Sprintf("%.2f", score),
+			ResponseData:  "",
+			ResponseFinal: "",
+			ImageURL:      requestMeta["image_url"],
+		}
 	}
 
+	// Set final response for both success and failure cases
+	responseFinalJSON, _ := json.Marshal(finalResp)
+	plateLog.ResponseFinal = string(responseFinalJSON)
+
+	// Save to database regardless of success or failure
 	if err := db.Create(&plateLog).Error; err != nil {
-		return nil, err
+		log.Printf("Database save failed: %v", err)
+		// Even if save fails, return the response status
+		return &finalResp, err
 	}
 
 	// Update request_data (with image_url if exists)
