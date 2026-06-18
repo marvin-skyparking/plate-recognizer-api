@@ -37,6 +37,11 @@ func (s *FiberServer) RegisterRoutes() {
 		middleware.AuthMiddleware(s.DB),
 		recognizeHandler.Recognize,
 	)
+	s.App.Post(
+		"/api/recognize/autoentry",
+		middleware.AuthMiddleware(s.DB),
+		recognizeHandler.Recognize_AutoEntry,
+	)
 
 	// ---------------------------
 	// User registration route
