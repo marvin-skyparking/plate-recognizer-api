@@ -32,7 +32,7 @@ type FinalResponse struct {
 
 func RecognizeAndSavePlateLog(
 	db *gorm.DB,
-	token string,
+	LPR_API_KEY string,
 	imagePath string,
 	locationCode string,
 	transactionNo string,
@@ -44,7 +44,7 @@ func RecognizeAndSavePlateLog(
 
 	// Call plate recognizer
 	plate, score, err := Recognize(
-		token,
+		LPR_API_KEY,
 		imagePath,
 		mmc,
 		cameraID,

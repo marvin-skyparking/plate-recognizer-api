@@ -12,14 +12,14 @@ import (
 )
 
 type RecognizeHandler struct {
-	Token string
-	DB    *gorm.DB
+	LPR_API_KEY string
+	DB          *gorm.DB
 }
 
-func NewRecognizeHandler(token string, db *gorm.DB) *RecognizeHandler {
+func NewRecognizeHandler(LPR_API_KEY string, db *gorm.DB) *RecognizeHandler {
 	return &RecognizeHandler{
-		Token: token,
-		DB:    db,
+		LPR_API_KEY: LPR_API_KEY,
+		DB:          db,
 	}
 }
 
@@ -80,7 +80,7 @@ func (h *RecognizeHandler) Recognize(c *fiber.Ctx) error {
 	fmt.Print(transactionNo)
 	resp, err := service.RecognizeAndSavePlateLog(
 		h.DB,
-		h.Token,
+		h.LPR_API_KEY,
 		tmp.Name(),
 		locationCode,
 		transactionNo,
