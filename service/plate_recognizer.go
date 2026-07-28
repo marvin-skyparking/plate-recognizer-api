@@ -8,7 +8,9 @@ import (
 	"log"
 	"mime/multipart"
 	"net/http"
+	"net/textproto"
 	"os"
+	"path/filepath"
 	"plate-recognizer-api/utils"
 	"time"
 )
@@ -16,16 +18,38 @@ import (
 var rrCounter uint64
 
 type Response struct {
-	Results []struct {
-		Plate string  `json:"plate"`
-		Score float64 `json:"score"`
-	} `json:"results"`
+	Filename         string  `json:"filename"`
+	ImageWidth       int     `json:"image_width"`
+	ImageHeight      int     `json:"image_height"`
+	PlatesFound      int     `json:"plates_found"`
+	ProcessingTimeMS float64 `json:"processing_time_ms"`
+	Plates           []Plate `json:"plates"`
 }
 
-func Recognize(token, imagePath, mmc, cameraID string, transactionNo string) (string, float64, error) {
-	start := time.Now()
+type Plate struct {
+	Text               string      `json:"text"`
+	RawText            string      `json:"raw_text"`
+	Confidence         float64     `json:"confidence"`
+	DetectorConfidence float64     `json:"detector_confidence"`
+	BoundingBox        BoundingBox `json:"bounding_box"`
+}
 
-	// Log execution time
+type BoundingBox struct {
+	X      int `json:"x"`
+	Y      int `json:"y"`
+	Width  int `json:"width"`
+	Height int `json:"height"`
+}
+
+func Recognize(
+	token,
+	imagePath,
+	mmc,
+	cameraID,
+	transactionNo string,
+) (string, float64, error) {
+
+	start := time.Now()
 	defer func() {
 		log.Println("⏱ PlateRecognizer duration:", time.Since(start))
 	}()
@@ -36,80 +60,66 @@ func Recognize(token, imagePath, mmc, cameraID string, transactionNo string) (st
 	}
 	defer file.Close()
 
+	// Detect MIME type
+	buffer := make([]byte, 512)
+	n, err := file.Read(buffer)
+	if err != nil && err != io.EOF {
+		return "", 0, err
+	}
+
+	contentType := http.DetectContentType(buffer[:n])
+
+	// Reset reader
+	if _, err := file.Seek(0, io.SeekStart); err != nil {
+		return "", 0, err
+	}
+
 	var body bytes.Buffer
 	writer := multipart.NewWriter(&body)
 
-	// Add image file
-	part, err := writer.CreateFormFile("upload", "image.jpg")
+	header := make(textproto.MIMEHeader)
+	header.Set(
+		"Content-Disposition",
+		fmt.Sprintf(
+			`form-data; name="file"; filename="%s"`,
+			filepath.Base(imagePath),
+		),
+	)
+	header.Set("Content-Type", contentType)
+
+	part, err := writer.CreatePart(header)
 	if err != nil {
 		return "", 0, err
 	}
+
 	if _, err := io.Copy(part, file); err != nil {
 		return "", 0, err
 	}
 
-	// Add extra fields
-	timestamp := time.Now().Format(time.RFC3339)
-	_ = writer.WriteField("timestamp", timestamp)
-	_ = writer.WriteField("mmc", mmc)
-	_ = writer.WriteField("camera_id", cameraID)
+	if err := writer.Close(); err != nil {
+		return "", 0, err
+	}
 
-	_ = writer.Close()
-
-	// Round-robin selection between two endpoints
-	// endpoints := [2]string{
-	// 	"http://plate-recognizer:8080/v1/plate-reader/",
-	// 	"http://plate-recognizer:8081/v1/plate-reader/",
-	// }
-	// endpoints := [2]string{
-	// 	"http://localhost:8080/v1/plate-reader/",
-	// 	"http://localhost:8081/v1/plate-reader/",
-	// }
-	// idx := atomic.AddUint64(&rrCounter, 1) % 2
-	// url := endpoints[idx]
-
-	// req, err := http.NewRequest(
-	// 	http.MethodPost,
-	// 	url,
-	// 	&body,
-	// )
-	// if err != nil {
-	// 	return "", 0, err
-	// }
-
-	// 1️⃣ get healthy endpoint
 	url, err := utils.GetHealthyPlateReaderURL()
 	if err != nil {
 		return "", 0, err
 	}
 
-	log.Println("🚀 Sending request to:", url)
-
-	// 2️⃣ create request (IMPORTANT)
-	req, err := http.NewRequest(
-		http.MethodPost,
-		url,
-		&body,
-	)
+	req, err := http.NewRequest(http.MethodPost, url, &body)
 	if err != nil {
 		return "", 0, err
 	}
 
-	// 3️⃣ set headers AFTER request is created
-	req.Header.Set("Authorization", "Token "+token)
+	req.Header.Set("X-API-Key", os.Getenv("TOKEN"))
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 
-	// ======================
-	// 🔎 LOG REQUEST
-	// ======================
-	log.Println("🚀 PlateRecognizer REQUEST")
-	log.Println("URL       :", req.URL.String())
-	log.Println("MMC       :", mmc)
-	log.Println("Camera ID :", cameraID)
-	log.Println("Timestamp :", timestamp)
-	log.Println("Body size :", body.Len(), "bytes")
+	log.Println("========== REQUEST ==========")
+	log.Println("URL          :", url)
+	log.Println("Image        :", imagePath)
+	log.Println("Image-Type   :", contentType)
+	log.Println("Request-Type :", writer.FormDataContentType())
+	log.Println("=============================")
 
-	// 4️⃣ send request
 	client := &http.Client{
 		Timeout: 15 * time.Second,
 	}
@@ -125,21 +135,38 @@ func Recognize(token, imagePath, mmc, cameraID string, transactionNo string) (st
 		return "", 0, err
 	}
 
-	// ======================
-	// 🔎 LOG RESPONSE
-	// ======================
-	log.Println("📥 PlateRecognizer RESPONSE")
+	log.Println("========== RESPONSE ==========")
 	log.Println("Status :", resp.Status)
 	log.Println("Body   :", string(respBody))
+	log.Println("==============================")
+
+	if resp.StatusCode != http.StatusOK {
+		return "", 0, fmt.Errorf("%s", string(respBody))
+	}
 
 	var result Response
 	if err := json.Unmarshal(respBody, &result); err != nil {
 		return "", 0, err
 	}
 
-	if len(result.Results) == 0 {
+	log.Printf("Parsed Response: %+v", result)
+	log.Printf("plates_found=%d len(plates)=%d",
+		result.PlatesFound,
+		len(result.Plates),
+	)
+
+	if result.PlatesFound == 0 || len(result.Plates) == 0 {
 		return "", 0, fmt.Errorf("no plate detected")
 	}
 
-	return result.Results[0].Plate, result.Results[0].Score, nil
+	best := result.Plates[0]
+
+	log.Printf(
+		"✅ Plate=%s Confidence=%.4f DetectorConfidence=%.4f",
+		best.Text,
+		best.Confidence,
+		best.DetectorConfidence,
+	)
+
+	return best.Text, best.Confidence, nil
 }

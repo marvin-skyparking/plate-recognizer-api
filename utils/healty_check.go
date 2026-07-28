@@ -10,11 +10,7 @@ import (
 var rrCounter uint64
 
 var endpoints = []string{
-	"http://plate-recognizer-1:8080",
-	"http://plate-recognizer-2:8080",
-	"http://plate-recognizer-3:8080",
-	"http://plate-recognizer-4:8080",
-	"http://plate-recognizer-5:8080",
+	"http://localhost:8002",
 }
 
 func isHealthy(base string) bool {
@@ -51,7 +47,7 @@ func GetHealthyPlateReaderURL() (string, error) {
 		base := endpoints[idx]
 
 		if isHealthy(base) {
-			return base + "/v1/plate-reader/", nil
+			return base + "/v1/recognize", nil
 		}
 	}
 
