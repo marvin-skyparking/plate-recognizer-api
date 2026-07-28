@@ -110,7 +110,7 @@ func Recognize(
 		return "", 0, err
 	}
 
-	req.Header.Set("X-API-Key", os.Getenv("TOKEN"))
+	req.Header.Set("X-API-Key", token)
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 
 	log.Println("========== REQUEST ==========")
