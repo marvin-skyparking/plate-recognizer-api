@@ -8,14 +8,14 @@ import (
 )
 
 type Env struct {
-	Port                 string
-	DBHost               string
-	DBPort               string
-	DBName               string
-	DBUser               string
-	DBPassword           string
-	DBRootPassword       string
-	PlateRecognizerToken string
+	Port           string
+	DBHost         string
+	DBPort         string
+	DBName         string
+	DBUser         string
+	DBPassword     string
+	DBRootPassword string
+	TOKEN          string
 }
 
 func LoadEnv() *Env {
@@ -25,13 +25,13 @@ func LoadEnv() *Env {
 	}
 
 	return &Env{
-		Port:                 os.Getenv("PORT"),
-		DBHost:               os.Getenv("BLUEPRINT_DB_HOST"),
-		DBPort:               os.Getenv("BLUEPRINT_DB_PORT"),
-		DBName:               os.Getenv("BLUEPRINT_DB_DATABASE"),
-		DBUser:               os.Getenv("BLUEPRINT_DB_USERNAME"),
-		DBPassword:           os.Getenv("BLUEPRINT_DB_PASSWORD"),
-		DBRootPassword:       os.Getenv("BLUEPRINT_DB_ROOT_PASSWORD"),
-		PlateRecognizerToken: os.Getenv("PLATE_RECOGNIZER_TOKEN"),
+		Port:           os.Getenv("PORT"),
+		DBHost:         os.Getenv("BLUEPRINT_DB_HOST"),
+		DBPort:         os.Getenv("BLUEPRINT_DB_PORT"),
+		DBName:         os.Getenv("BLUEPRINT_DB_DATABASE"),
+		DBUser:         os.Getenv("BLUEPRINT_DB_USERNAME"),
+		DBPassword:     os.Getenv("BLUEPRINT_DB_PASSWORD"),
+		DBRootPassword: os.Getenv("BLUEPRINT_DB_ROOT_PASSWORD"),
+		TOKEN:          os.Getenv("TOKEN"),
 	}
 }
