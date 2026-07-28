@@ -15,7 +15,7 @@ type Env struct {
 	DBUser         string
 	DBPassword     string
 	DBRootPassword string
-	TOKEN          string
+	LPR_API_KEY    string
 }
 
 func LoadEnv() *Env {
@@ -32,6 +32,6 @@ func LoadEnv() *Env {
 		DBUser:         os.Getenv("BLUEPRINT_DB_USERNAME"),
 		DBPassword:     os.Getenv("BLUEPRINT_DB_PASSWORD"),
 		DBRootPassword: os.Getenv("BLUEPRINT_DB_ROOT_PASSWORD"),
-		TOKEN:          os.Getenv("TOKEN"),
+		LPR_API_KEY:    os.Getenv("LPR_API_KEY"),
 	}
 }

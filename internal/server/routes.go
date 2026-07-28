@@ -28,7 +28,7 @@ func (s *FiberServer) RegisterRoutes() {
 	// Plate recognition route
 	// ---------------------------
 	recognizeHandler := handler.NewRecognizeHandler(
-		s.Env.TOKEN,
+		s.Env.LPR_API_KEY,
 		s.DB,
 	)
 	// 🔐 Protected route
