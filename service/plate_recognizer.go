@@ -118,6 +118,7 @@ func Recognize(
 	log.Println("Image        :", imagePath)
 	log.Println("Image-Type   :", contentType)
 	log.Println("Request-Type :", writer.FormDataContentType())
+	log.Println("TOKEN :", token)
 	log.Println("=============================")
 
 	client := &http.Client{
