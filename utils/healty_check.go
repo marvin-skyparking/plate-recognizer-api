@@ -22,7 +22,7 @@ func isHealthy(base string) bool {
 	// Use HEAD or GET to plate-reader endpoint
 	req, err := http.NewRequest(
 		http.MethodHead,
-		base+"/v1/plate-reader/",
+		base+"/v1/recognize",
 		nil,
 	)
 	if err != nil {
@@ -47,7 +47,7 @@ func GetHealthyPlateReaderURL() (string, error) {
 		base := endpoints[idx]
 
 		if isHealthy(base) {
-			return base + "/v1/recognize", nil
+			return base + "/health", nil
 		}
 	}
 
