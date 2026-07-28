@@ -110,7 +110,7 @@ func Recognize(
 		return "", 0, err
 	}
 
-	req.Header.Set("X-API-Key", LPR_API_KEY)
+	req.Header.Set("X-API-Key", os.Getenv("LPR_API_KEY"))
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 
 	log.Println("========== REQUEST ==========")
@@ -118,7 +118,7 @@ func Recognize(
 	log.Println("Image        :", imagePath)
 	log.Println("Image-Type   :", contentType)
 	log.Println("Request-Type :", writer.FormDataContentType())
-	log.Println("TOKEN :", LPR_API_KEY)
+	log.Println("TOKEN :", os.Getenv("LPR_API_KEY"))
 	log.Println("=============================")
 
 	client := &http.Client{
