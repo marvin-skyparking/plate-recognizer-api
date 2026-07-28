@@ -23,6 +23,7 @@ services:
       MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
       MINIO_USE_SSL: ${MINIO_USE_SSL}
       MINIO_BUCKET_IMAGE_LPR: ${MINIO_BUCKET_IMAGE_LPR}
+      LPR_API_KEY: ${LPR_API_KEY}
     networks:
       - lpr-network   # ✅ just reference the network name
 
