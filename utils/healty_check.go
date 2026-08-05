@@ -10,7 +10,7 @@ import (
 var rrCounter uint64
 
 var endpoints = []string{
-	"http://localhost:8000",
+	"http://platerecognizer:8000",
 }
 
 func isHealthy(base string) bool {
