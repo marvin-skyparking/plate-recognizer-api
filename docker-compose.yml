@@ -26,6 +26,7 @@ services:
       LPR_API_KEY: ${LPR_API_KEY}
     networks:
       - lpr-network   # ✅ just reference the network name
+      - post_transaction-network
 
 volumes:
   postgres_data_bp:
@@ -33,3 +34,6 @@ volumes:
 networks:
   lpr-network:
     external: true   # ✅ define external network only at top level
+    
+  post_transaction-network:
+    external: true
