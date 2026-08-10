@@ -27,6 +27,7 @@ services:
     networks:
       - lpr-network   # ✅ just reference the network name
       - post_transaction-network
+      - minio_default
 
 volumes:
   postgres_data_bp:
@@ -36,4 +37,7 @@ networks:
     external: true   # ✅ define external network only at top level
     
   post_transaction-network:
+    external: true
+  
+  minio_default:
     external: true
