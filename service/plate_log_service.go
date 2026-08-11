@@ -61,8 +61,9 @@ func RecognizeAndSavePlateLog(
 		Message: "plate recognized successfully",
 		Code:    "SUCCESS",
 		Data: map[string]interface{}{
-			"plate": plate,
-			"score": score,
+			"plate":     plate,
+			"score":     score,
+			"image_url": imagePath, // This will be updated if MinIO upload succeeds
 		},
 	}
 
