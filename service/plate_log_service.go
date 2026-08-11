@@ -56,17 +56,6 @@ func RecognizeAndSavePlateLog(
 
 	plate = strings.ToUpper(plate)
 
-	finalResp := FinalResponse{
-		Status:  200,
-		Message: "plate recognized successfully",
-		Code:    "SUCCESS",
-		Data: map[string]interface{}{
-			"plate":     plate,
-			"score":     score,
-			"image_url": imagePath, // This will be updated if MinIO upload succeeds
-		},
-	}
-
 	requestMeta := map[string]string{
 		"location_code": locationCode,
 		"camera_id":     cameraID,
@@ -82,6 +71,8 @@ func RecognizeAndSavePlateLog(
 	log.Println("MINIO_USE_SSL =", os.Getenv("MINIO_USE_SSL"))
 
 	minioBucket := os.Getenv("MINIO_BUCKET_IMAGE_LPR")
+
+	var imageURL string
 
 	if minioBucket != "" {
 		mc, err := minio.New()
@@ -104,9 +95,26 @@ func RecognizeAndSavePlateLog(
 			if err != nil {
 				log.Printf("MinIO upload failed: %v", err)
 			} else {
+				imageURL = url
 				requestMeta["image_url"] = url
 			}
 		}
+	}
+
+	// Fallback to local image path if MinIO upload failed
+	if imageURL == "" {
+		imageURL = imagePath
+	}
+
+	finalResp := FinalResponse{
+		Status:  200,
+		Message: "plate recognized successfully",
+		Code:    "SUCCESS",
+		Data: map[string]interface{}{
+			"plate":     plate,
+			"score":     score,
+			"image_url": imageURL, // This will be updated if MinIO upload succeeds
+		},
 	}
 
 	requestJSON, _ := json.Marshal(requestMeta)
