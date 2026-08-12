@@ -3,6 +3,7 @@ package service
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -16,6 +17,18 @@ import (
 )
 
 var rrCounter uint64
+
+var ErrNoPlateDetected = errors.New("no plate detected")
+
+func normalizeRecognizeResult(plate string, score float64, err error) (string, float64, error) {
+	if err == nil {
+		return plate, score, nil
+	}
+	if errors.Is(err, ErrNoPlateDetected) {
+		return "", 0, ErrNoPlateDetected
+	}
+	return "", 0, err
+}
 
 type Response struct {
 	Filename         string  `json:"filename"`
@@ -157,7 +170,7 @@ func Recognize(
 	)
 
 	if result.PlatesFound == 0 || len(result.Plates) == 0 {
-		return "", 0, fmt.Errorf("no plate detected")
+		return normalizeRecognizeResult("", 0, ErrNoPlateDetected)
 	}
 
 	best := result.Plates[0]
@@ -169,5 +182,5 @@ func Recognize(
 		best.DetectorConfidence,
 	)
 
-	return best.Text, best.DetectorConfidence, nil
+	return normalizeRecognizeResult(best.Text, best.DetectorConfidence, nil)
 }

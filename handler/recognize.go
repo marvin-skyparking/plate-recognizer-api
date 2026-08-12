@@ -97,8 +97,17 @@ func (h *RecognizeHandler) Recognize(c *fiber.Ctx) error {
 	}
 
 	// ==========================
-	// SUCCESS RESPONSE
+	// RESPONSE
 	// ==========================
+	if resp.Status >= fiber.StatusBadRequest {
+		return utils.Error(
+			c,
+			resp.Status,
+			resp.Code,
+			resp.Message,
+		)
+	}
+
 	return utils.Success(
 		c,
 		fiber.StatusOK,
