@@ -169,5 +169,5 @@ func Recognize(
 		best.DetectorConfidence,
 	)
 
-	return best.Text, best.Confidence, nil
+	return best.Text, best.DetectorConfidence, nil
 }
