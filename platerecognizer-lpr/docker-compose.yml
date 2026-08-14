@@ -16,10 +16,10 @@ services:
       LPR_MIN_RESULT_DETECTOR_CONF: "0.45"
 
       # OCR
-      LPR_MIN_OCR_CONF: "0.60"
+      LPR_MIN_OCR_CONF: "0.70"
 
       # Upload
-      LPR_MAX_UPLOAD_MB: "10"
+      LPR_MAX_UPLOAD_MB: "20"
 
       # GPU if available, otherwise CPU
       LPR_ONNX_DEVICE: "both"
