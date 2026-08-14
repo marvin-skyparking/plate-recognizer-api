@@ -4,14 +4,54 @@ services:
   platerecognizer:
     image: yudasiskariot/lpr-api:v1.0.7
     container_name: platerecognizer
+
     ports:
       - "8080:8000"
+
     environment:
       LPR_API_KEY: "Zkajsasasauha"
+
+      # Detection
       LPR_DETECTOR_MIN_CONF: "0.35"
+      LPR_MIN_RESULT_DETECTOR_CONF: "0.45"
+
+      # OCR
       LPR_MIN_OCR_CONF: "0.60"
+
+      # Upload
       LPR_MAX_UPLOAD_MB: "10"
+
+      # NVIDIA / ONNX Runtime
+      LPR_ONNX_DEVICE: "gpu"
+      LPR_ONNX_INTRA_OP_THREADS: "4"
+
+      # Detection
+      LPR_ENABLE_TILED_DETECTION: "true"
+      LPR_TILED_DETECTION_CONF: "0.65"
+      LPR_TILED_DETECTION_MIN_WIDTH_RATIO: "0.18"
+
+      # OCR
+      LPR_OCR_PREPROCESSING_VARIANTS: "2"
+      LPR_REQUIRE_INDONESIA_PLATE_FORMAT: "true"
+      LPR_OCR_MIN_CROP_WIDTH: "400"
+      LPR_OCR_UPSCALE_UNSHARP_AMOUNT: "0.5"
+      LPR_OCR_UPSCALE_UNSHARP_SIGMA: "1.0"
+
+      # Fallbacks
+      LPR_ENABLE_GLARE_FALLBACK: "true"
+      LPR_ENABLE_GRAYSCALE_FALLBACK: "true"
+
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities:
+                - gpu
+
     restart: unless-stopped
+
     networks:
       - lpr-network
 
