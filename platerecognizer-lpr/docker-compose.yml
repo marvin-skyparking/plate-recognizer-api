@@ -23,7 +23,7 @@ services:
 
       # GPU if available, otherwise CPU
       LPR_ONNX_DEVICE: "both"
-      LPR_ONNX_INTRA_OP_THREADS: "4"
+      LPR_ONNX_INTRA_OP_THREADS: "24"
 
       # Detection
       LPR_ENABLE_TILED_DETECTION: "true"
