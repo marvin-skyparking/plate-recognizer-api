@@ -14,23 +14,12 @@ services:
       # Detection
       LPR_DETECTOR_MIN_CONF: "0.35"
       LPR_MIN_RESULT_DETECTOR_CONF: "0.45"
-
-      # OCR
-      LPR_MIN_OCR_CONF: "0.70"
-
-      # Upload
-      LPR_MAX_UPLOAD_MB: "20"
-
-      # GPU if available, otherwise CPU
-      LPR_ONNX_DEVICE: "both"
-      LPR_ONNX_INTRA_OP_THREADS: "24"
-
-      # Detection
       LPR_ENABLE_TILED_DETECTION: "true"
       LPR_TILED_DETECTION_CONF: "0.65"
       LPR_TILED_DETECTION_MIN_WIDTH_RATIO: "0.18"
 
       # OCR
+      LPR_MIN_OCR_CONF: "0.70"
       LPR_OCR_PREPROCESSING_VARIANTS: "3"
       LPR_REQUIRE_INDONESIA_PLATE_FORMAT: "true"
       LPR_OCR_MIN_CROP_WIDTH: "512"
@@ -40,6 +29,17 @@ services:
       # Fallbacks
       LPR_ENABLE_GLARE_FALLBACK: "true"
       LPR_ENABLE_GRAYSCALE_FALLBACK: "true"
+
+      # Upload
+      LPR_MAX_UPLOAD_MB: "20"
+
+      # GPU / CPU
+      LPR_ONNX_DEVICE: "both"
+      LPR_ONNX_INTRA_OP_THREADS: "24"
+
+      # Runtime
+      LPR_MAX_DETECTION_CANDIDATES: "1"
+      LPR_MAX_INPUT_DIMENSION: "1024"
 
     restart: unless-stopped
 
