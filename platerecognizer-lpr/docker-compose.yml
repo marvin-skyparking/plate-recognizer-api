@@ -13,8 +13,8 @@ services:
       LPR_API_KEY: "Zkajsasasauha"
 
       # Detection
-      LPR_DETECTOR_MIN_CONF: "0.35"
-      LPR_MIN_RESULT_DETECTOR_CONF: "0.45"
+      LPR_DETECTOR_MIN_CONF: "0.20"
+      LPR_MIN_RESULT_DETECTOR_CONF: "0.25"
       LPR_ENABLE_TILED_DETECTION: "true"
       LPR_TILED_DETECTION_CONF: "0.65"
       LPR_TILED_DETECTION_MIN_WIDTH_RATIO: "0.18"
@@ -35,7 +35,7 @@ services:
       LPR_OCR_MIN_CROP_WIDTH: "512"
       LPR_OCR_UPSCALE_UNSHARP_AMOUNT: "0.5"
       LPR_OCR_UPSCALE_UNSHARP_SIGMA: "1.0"
-      LPR_OCR_CONFUSION_CONFIDENCE_THRESHOLD: "1.0"
+      LPR_OCR_CONFUSION_CONFIDENCE_THRESHOLD: "0.8"
 
       # Fallbacks
       LPR_ENABLE_GLARE_FALLBACK: "true"
@@ -47,7 +47,7 @@ services:
       # GPU + CPU
       # Application should prefer CUDA and fall back to CPU
       LPR_ONNX_DEVICE: "both"
-      LPR_ONNX_INTRA_OP_THREADS: "24"
+      LPR_ONNX_INTRA_OP_THREADS: "2"
 
       # Runtime
       LPR_MAX_DETECTION_CANDIDATES: "1"
