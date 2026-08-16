@@ -150,7 +150,7 @@ services:
     restart: unless-stopped
 
     # Give container access to NVIDIA GPU
-    gpus: all
+    # gpus: all
 
     networks:
       - lpr-network
