@@ -107,6 +107,7 @@ services:
       # device="cpu" for the OCR model regardless of this setting, so
       # OCR throughput is governed entirely by LPR_ONNX_INTRA_OP_THREADS
       # and CPU concurrency below, not by the GPU.
+
       LPR_ONNX_DEVICE: "cpu"
 
       # 🔧 TUNE — HIGH PRIORITY: was 24, changed to 4. This is

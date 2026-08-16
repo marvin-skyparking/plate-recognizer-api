@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 
@@ -50,9 +51,6 @@ func RecognizeAndSavePlateLog(
 		cameraID,
 		transactionNo,
 	)
-	if err != nil {
-		return nil, err
-	}
 
 	plate = strings.ToUpper(plate)
 
@@ -64,6 +62,22 @@ func RecognizeAndSavePlateLog(
 			"plate": plate,
 			"score": score,
 		},
+	}
+
+	if err != nil {
+		if !errors.Is(err, ErrNoPlateDetected) {
+			return nil, err
+		}
+
+		finalResp = FinalResponse{
+			Status:  400,
+			Message: "no plate detected",
+			Code:    "PROCESS_FAILED",
+			Data: map[string]interface{}{
+				"plate": plate,
+				"score": score,
+			},
+		}
 	}
 
 	requestMeta := map[string]string{
