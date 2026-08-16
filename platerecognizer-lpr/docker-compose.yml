@@ -142,6 +142,10 @@ services:
       LPR_PLATE_VOTING_REQUIRED_OBSERVATIONS: "3"
       LPR_PLATE_VOTING_WINDOW_SECONDS: "5"
 
+      # ============================================================
+      # Ovelay Region
+      # ============================================================
+      LPR_DETECTION_IGNORE_OVERLAY_REGIONS: "0.76,0.01,0.21,0.04"
     restart: unless-stopped
 
     # Give container access to NVIDIA GPU
