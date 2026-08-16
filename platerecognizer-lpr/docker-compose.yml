@@ -20,8 +20,8 @@ services:
       LPR_TILED_DETECTION_MIN_WIDTH_RATIO: "0.18"
 
       # Detection ROI
-      # Format: x,y,width,height (normalized 0..1)
-      LPR_DETECTION_ROI: ""
+      # x,y,width,height - normalized 0..1
+      LPR_DETECTION_ROI: "0.15,0.30,0.70,0.50"
       LPR_DETECTION_ROI_FALLBACK_FULL_FRAME: "true"
 
       # Fast detection
@@ -44,8 +44,8 @@ services:
       # Upload
       LPR_MAX_UPLOAD_MB: "20"
 
-      # GPU / CPU
-      # CUDA first, CPU fallback
+      # GPU + CPU
+      # Application should prefer CUDA and fall back to CPU
       LPR_ONNX_DEVICE: "both"
       LPR_ONNX_INTRA_OP_THREADS: "24"
 
@@ -59,14 +59,8 @@ services:
 
     restart: unless-stopped
 
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities:
-                - gpu
+    # Give container access to NVIDIA GPU
+    gpus: all
 
     networks:
       - lpr-network
