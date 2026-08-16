@@ -2,7 +2,7 @@ version: "3.8"
 
 services:
   platerecognizer:
-    image: yudasiskariot/lpr-api:v1.1.1
+    image: yudasiskariot/lpr-api:v1.1.0
     container_name: platerecognizer
 
     ports:
