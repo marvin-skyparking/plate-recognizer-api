@@ -107,7 +107,7 @@ services:
       # device="cpu" for the OCR model regardless of this setting, so
       # OCR throughput is governed entirely by LPR_ONNX_INTRA_OP_THREADS
       # and CPU concurrency below, not by the GPU.
-      LPR_ONNX_DEVICE: "cpu"
+      LPR_ONNX_DEVICE: "cuda"
 
       # 🔧 TUNE — HIGH PRIORITY: was 24, changed to 4. This is
       # per-inference-call thread count, not a total pool. At 24, a
@@ -129,7 +129,7 @@ services:
       # (28 // 4 = 7 here). Set explicitly once you've picked a final
       # thread count via benchmarking, so this doesn't silently change
       # if you tune the thread count later without revisiting this.
-      # LPR_MAX_CONCURRENT_RECOGNITIONS: "7"
+      LPR_MAX_CONCURRENT_RECOGNITIONS: "7"
 
       # ============================================================
       # Runtime
