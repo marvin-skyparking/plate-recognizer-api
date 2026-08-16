@@ -57,7 +57,7 @@ services:
       # meaningfully in framing, consider running per-gate ROI values
       # (e.g. one container/config per camera group) instead of one
       # shared value across all 30.
-      LPR_DETECTION_ROI: "0.70"
+      LPR_DETECTION_ROI: ""
       LPR_DETECTION_ROI_FALLBACK_FULL_FRAME: "true"
 
       # ============================================================
