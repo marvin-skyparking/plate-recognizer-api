@@ -107,7 +107,7 @@ services:
       # device="cpu" for the OCR model regardless of this setting, so
       # OCR throughput is governed entirely by LPR_ONNX_INTRA_OP_THREADS
       # and CPU concurrency below, not by the GPU.
-      LPR_ONNX_DEVICE: "cpu"
+      LPR_ONNX_DEVICE: "cuda"
 
       # 🔧 TUNE — HIGH PRIORITY: was 24, changed to 4. This is
       # per-inference-call thread count, not a total pool. At 24, a
@@ -149,7 +149,7 @@ services:
     restart: unless-stopped
 
     # Give container access to NVIDIA GPU
-    # gpus: all
+    gpus: all
 
     networks:
       - lpr-network
