@@ -73,7 +73,7 @@ services:
       # is a reasonable place to hold your real quality bar, now that
       # detection thresholds above are permissive again.
       LPR_MIN_OCR_CONF: "0.70"
-      LPR_OCR_PREPROCESSING_VARIANTS: "3"
+      LPR_OCR_PREPROCESSING_VARIANTS: "4"
       LPR_REQUIRE_INDONESIA_PLATE_FORMAT: "true"
       LPR_OCR_MIN_CROP_WIDTH: "512"
       LPR_OCR_UPSCALE_UNSHARP_AMOUNT: "0.5"
