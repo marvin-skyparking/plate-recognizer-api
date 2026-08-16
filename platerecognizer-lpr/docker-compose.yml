@@ -2,16 +2,155 @@ version: "3.8"
 
 services:
   platerecognizer:
-    image: yudasiskariot/lpr-api:v1.0.1
+    image: yudasiskariot/lpr-api:v1.1.3
     container_name: platerecognizer
+
     ports:
       - "8080:8000"
+
     environment:
+      # ============================================================
+      # API
+      # ============================================================
+      # 🔧 TUNE: "Zkajsasasauha" is short and low-entropy for a
+      # production API key sitting on a public/internal network. Generate
+      # a real random secret, e.g.: openssl rand -hex 32
       LPR_API_KEY: "Zkajsasasauha"
-      LPR_DETECTOR_MIN_CONF: "0.35"
-      LPR_MIN_OCR_CONF: "0.60"
-      LPR_MAX_UPLOAD_MB: "10"
+
+      # ============================================================
+      # Detection
+      # ============================================================
+      # 🔧 TUNE — HIGH PRIORITY: left at library defaults (not your
+      # previous 0.35 / 0.45). The pipeline's own design intent is:
+      # keep the detector permissive, let LPR_MIN_OCR_CONF be the real
+      # quality gate. Raising these above default rejects plates before
+      # OCR ever runs -- exactly the small/glare-affected CCTV frames
+      # the fallback logic (glare/grayscale fallback, tiling) exists to
+      # rescue. Only raise these again if you've confirmed, after fixing
+      # the concurrency/threading items below, that false positives
+      # (wrong box picked, not just missed plates) are the actual problem.
+      LPR_DETECTOR_MIN_CONF: "0.20"
+      LPR_MIN_RESULT_DETECTOR_CONF: "0.25"
+      LPR_ENABLE_TILED_DETECTION: "true"
+      LPR_TILED_DETECTION_CONF: "0.65"
+      LPR_TILED_DETECTION_MIN_WIDTH_RATIO: "0.18"
+
+      # 🔧 TUNE: was 1, raised to 2 here. With MAX_DETECTION_CANDIDATES=1
+      # there is zero fallback if the top-ranked detector box isn't the
+      # actual plate (e.g. a headlight/reflection outranks it). 2 gives
+      # one second-chance candidate for a small extra OCR cost. Raise
+      # toward 3 only if you still see wrong-box misses after this, and
+      # you have CPU headroom to spare (each extra candidate = extra OCR
+      # calls).
+      LPR_MAX_DETECTION_CANDIDATES: "2"
+
+      # ============================================================
+      # Detection ROI
+      # ============================================================
+      # x,y,width,height - normalized 0..1
+      # 🔧 TUNE — SITE-SPECIFIC: this rectangle is calibrated to one
+      # camera's mounting angle/height. If your 30 gates don't all share
+      # identical camera framing, a single fixed ROI will crop the plate
+      # out of frame on some gates. DETECTION_ROI_FALLBACK_FULL_FRAME=true
+      # below is your safety net for that case, but it costs a full extra
+      # detection pass (latency) whenever the ROI misses. If gates differ
+      # meaningfully in framing, consider running per-gate ROI values
+      # (e.g. one container/config per camera group) instead of one
+      # shared value across all 30.
+      LPR_DETECTION_ROI: ""
+      LPR_DETECTION_ROI_FALLBACK_FULL_FRAME: "true"
+
+      # ============================================================
+      # Fast detection
+      # ============================================================
+      LPR_DETECTION_FAST_CONFIDENCE: "0.85"
+      LPR_DETECTION_FAST_MIN_WIDTH_RATIO: "0.18"
+
+      # ============================================================
+      # OCR
+      # ============================================================
+      # Kept at 0.70 (stricter than the library default of 0.60). This
+      # is a reasonable place to hold your real quality bar, now that
+      # detection thresholds above are permissive again.
+      LPR_MIN_OCR_CONF: "0.70"
+      LPR_OCR_PREPROCESSING_VARIANTS: "4"
+      LPR_REQUIRE_INDONESIA_PLATE_FORMAT: "true"
+      LPR_OCR_MIN_CROP_WIDTH: "512"
+      LPR_OCR_UPSCALE_UNSHARP_AMOUNT: "0.5"
+      LPR_OCR_UPSCALE_UNSHARP_SIGMA: "1.0"
+
+      # 🔧 TUNE: was 1.0, reverted to library default 0.70. At 1.0,
+      # virtually every character on every plate is treated as
+      # "low confidence" (real OCR confidences are almost never exactly
+      # 1.0), so the reclassification path runs on nearly every request --
+      # extra OCR calls stacked on top of the threading load below. Revert
+      # to 1.0 only after confirming (via the benchmark script) that you
+      # have CPU headroom to spare for it.
+      LPR_OCR_CONFUSION_CONFIDENCE_THRESHOLD: "0.70"
+
+      # ============================================================
+      # Fallbacks
+      # ============================================================
+      LPR_ENABLE_GLARE_FALLBACK: "true"
+      LPR_ENABLE_GRAYSCALE_FALLBACK: "true"
+
+      # ============================================================
+      # Upload
+      # ============================================================
+      LPR_MAX_UPLOAD_MB: "20"
+
+      # ============================================================
+      # GPU + CPU
+      # ============================================================
+      # Application should prefer CUDA and fall back to CPU.
+      # Note: this only affects the detector. ocr.py hardcodes
+      # device="cpu" for the OCR model regardless of this setting, so
+      # OCR throughput is governed entirely by LPR_ONNX_INTRA_OP_THREADS
+      # and CPU concurrency below, not by the GPU.
+      LPR_ONNX_DEVICE: "both"
+
+      # 🔧 TUNE — HIGH PRIORITY: was 24, changed to 4. This is
+      # per-inference-call thread count, not a total pool. At 24, a
+      # single OCR call on your 28-core box leaves almost no room for a
+      # second concurrent request before oversubscription -- exactly the
+      # "fine on laptop, unreliable across 30 gates" symptom. Use the
+      # benchmark_threads.py script (fire concurrent bursts of ~30
+      # requests against burst sizes 10/20/30) to compare 2 / 4 / 8 on
+      # your actual hardware and workload before trusting this default;
+      # small, fast models like this one often don't benefit from more
+      # than 2-4 threads per call, and you get more throughput from
+      # running more requests in parallel at a low per-call thread count
+      # than from a few requests each grabbing many threads.
+      LPR_ONNX_INTRA_OP_THREADS: "4"
+
+      # 🔧 NEW — only takes effect if you deploy the patched main.py
+      # that offloads recognize() to a thread pool behind a semaphore.
+      # Defaults to cpu_count // LPR_ONNX_INTRA_OP_THREADS if unset
+      # (28 // 4 = 7 here). Set explicitly once you've picked a final
+      # thread count via benchmarking, so this doesn't silently change
+      # if you tune the thread count later without revisiting this.
+      # LPR_MAX_CONCURRENT_RECOGNITIONS: "7"
+
+      # ============================================================
+      # Runtime
+      # ============================================================
+      LPR_MAX_INPUT_DIMENSION: "480"
+
+      # ============================================================
+      # Temporal voting
+      # ============================================================
+      LPR_PLATE_VOTING_REQUIRED_OBSERVATIONS: "3"
+      LPR_PLATE_VOTING_WINDOW_SECONDS: "5"
+
+      # ============================================================
+      # Ovelay Region
+      # ============================================================
+      LPR_DETECTION_IGNORE_OVERLAY_REGIONS: "0.76,0.01,0.21,0.04"
     restart: unless-stopped
+
+    # Give container access to NVIDIA GPU
+    gpus: all
+
     networks:
       - lpr-network
 
