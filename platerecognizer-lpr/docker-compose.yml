@@ -8,57 +8,62 @@ services:
     ports:
       - "8080:8000"
 
+    restart: unless-stopped
+
+    # ============================================================
+    # NVIDIA GPU
+    # ============================================================
+    gpus: all
+
     environment:
       # ============================================================
       # API
       # ============================================================
-      # 🔧 TUNE: "Zkajsasasauha" is short and low-entropy for a
-      # production API key sitting on a public/internal network. Generate
-      # a real random secret, e.g.: openssl rand -hex 32
       LPR_API_KEY: "Zkajsasasauha"
 
       # ============================================================
       # Detection
       # ============================================================
-      # 🔧 TUNE — HIGH PRIORITY: left at library defaults (not your
-      # previous 0.35 / 0.45). The pipeline's own design intent is:
-      # keep the detector permissive, let LPR_MIN_OCR_CONF be the real
-      # quality gate. Raising these above default rejects plates before
-      # OCR ever runs -- exactly the small/glare-affected CCTV frames
-      # the fallback logic (glare/grayscale fallback, tiling) exists to
-      # rescue. Only raise these again if you've confirmed, after fixing
-      # the concurrency/threading items below, that false positives
-      # (wrong box picked, not just missed plates) are the actual problem.
+      LPR_DETECTOR_MODEL: "yolo-v9-t-256-license-plate-end2end"
+
+      # Keep detector permissive.
+      # OCR confidence + Indonesia plate format are the final gates.
       LPR_DETECTOR_MIN_CONF: "0.20"
       LPR_MIN_RESULT_DETECTOR_CONF: "0.25"
+
+      # ============================================================
+      # Detection candidates
+      # ============================================================
+      # 2 gives a second candidate when the top detector box
+      # is not actually the license plate.
+      LPR_MAX_DETECTION_CANDIDATES: "2"
+
+      # ============================================================
+      # Tiled Detection
+      # ============================================================
+      # Useful for wide 1080p/1440p CCTV where the plate is small.
       LPR_ENABLE_TILED_DETECTION: "true"
       LPR_TILED_DETECTION_CONF: "0.65"
       LPR_TILED_DETECTION_MIN_WIDTH_RATIO: "0.18"
 
-      # 🔧 TUNE: was 1, raised to 2 here. With MAX_DETECTION_CANDIDATES=1
-      # there is zero fallback if the top-ranked detector box isn't the
-      # actual plate (e.g. a headlight/reflection outranks it). 2 gives
-      # one second-chance candidate for a small extra OCR cost. Raise
-      # toward 3 only if you still see wrong-box misses after this, and
-      # you have CPU headroom to spare (each extra candidate = extra OCR
-      # calls).
-      LPR_MAX_DETECTION_CANDIDATES: "2"
-
       # ============================================================
       # Detection ROI
       # ============================================================
-      # x,y,width,height - normalized 0..1
-      # 🔧 TUNE — SITE-SPECIFIC: this rectangle is calibrated to one
-      # camera's mounting angle/height. If your 30 gates don't all share
-      # identical camera framing, a single fixed ROI will crop the plate
-      # out of frame on some gates. DETECTION_ROI_FALLBACK_FULL_FRAME=true
-      # below is your safety net for that case, but it costs a full extra
-      # detection pass (latency) whenever the ROI misses. If gates differ
-      # meaningfully in framing, consider running per-gate ROI values
-      # (e.g. one container/config per camera group) instead of one
-      # shared value across all 30.
+      # Empty = full-frame detection.
+      #
+      # If all cameras have the same framing, you can later set:
+      # LPR_DETECTION_ROI: "x,y,width,height"
+      #
+      # Keep fallback enabled because you have ~30 gates/cameras.
       LPR_DETECTION_ROI: ""
       LPR_DETECTION_ROI_FALLBACK_FULL_FRAME: "true"
+
+      # ============================================================
+      # Detection -> OCR crop
+      # ============================================================
+      LPR_OCR_CROP_PADDING_X: "0.12"
+      LPR_OCR_CROP_PADDING_Y: "0.20"
+      LPR_OCR_CROP_MIN_PADDING_PX: "2"
 
       # ============================================================
       # Fast detection
@@ -69,23 +74,23 @@ services:
       # ============================================================
       # OCR
       # ============================================================
-      # Kept at 0.70 (stricter than the library default of 0.60). This
-      # is a reasonable place to hold your real quality bar, now that
-      # detection thresholds above are permissive again.
+      LPR_OCR_MODEL: "cct-s-v2-global-model"
+
+      # Real OCR quality gate
       LPR_MIN_OCR_CONF: "0.70"
+
       LPR_OCR_PREPROCESSING_VARIANTS: "4"
       LPR_REQUIRE_INDONESIA_PLATE_FORMAT: "true"
+
+      # IMPORTANT:
+      # Small detector crops are upscaled before OCR.
       LPR_OCR_MIN_CROP_WIDTH: "512"
+
+      # Sharpen after upscaling
       LPR_OCR_UPSCALE_UNSHARP_AMOUNT: "0.5"
       LPR_OCR_UPSCALE_UNSHARP_SIGMA: "1.0"
 
-      # 🔧 TUNE: was 1.0, reverted to library default 0.70. At 1.0,
-      # virtually every character on every plate is treated as
-      # "low confidence" (real OCR confidences are almost never exactly
-      # 1.0), so the reclassification path runs on nearly every request --
-      # extra OCR calls stacked on top of the threading load below. Revert
-      # to 1.0 only after confirming (via the benchmark script) that you
-      # have CPU headroom to spare for it.
+      # Character confusion correction
       LPR_OCR_CONFUSION_CONFIDENCE_THRESHOLD: "0.70"
 
       # ============================================================
@@ -93,6 +98,7 @@ services:
       # ============================================================
       LPR_ENABLE_GLARE_FALLBACK: "true"
       LPR_ENABLE_GRAYSCALE_FALLBACK: "true"
+      LPR_ENABLE_FRAGMENT_RECOVERY: "true"
 
       # ============================================================
       # Upload
@@ -100,41 +106,42 @@ services:
       LPR_MAX_UPLOAD_MB: "20"
 
       # ============================================================
-      # GPU + CPU
+      # GPU / ONNX Runtime
       # ============================================================
-      # Application should prefer CUDA and fall back to CPU.
-      # Note: this only affects the detector. ocr.py hardcodes
-      # device="cpu" for the OCR model regardless of this setting, so
-      # OCR throughput is governed entirely by LPR_ONNX_INTRA_OP_THREADS
-      # and CPU concurrency below, not by the GPU.
-      LPR_ONNX_DEVICE: "cuda"
+      # gpu = CUDA first, CPU fallback.
+      #
+      # Your build_onnx_providers() supports:
+      # cpu / gpu / both / cuda / auto
+      #
+      # Use gpu explicitly for this server.
+      LPR_ONNX_DEVICE: "gpu"
 
-      # 🔧 TUNE — HIGH PRIORITY: was 24, changed to 4. This is
-      # per-inference-call thread count, not a total pool. At 24, a
-      # single OCR call on your 28-core box leaves almost no room for a
-      # second concurrent request before oversubscription -- exactly the
-      # "fine on laptop, unreliable across 30 gates" symptom. Use the
-      # benchmark_threads.py script (fire concurrent bursts of ~30
-      # requests against burst sizes 10/20/30) to compare 2 / 4 / 8 on
-      # your actual hardware and workload before trusting this default;
-      # small, fast models like this one often don't benefit from more
-      # than 2-4 threads per call, and you get more throughput from
-      # running more requests in parallel at a low per-call thread count
-      # than from a few requests each grabbing many threads.
+      # Per inference call.
+      # Keep low enough to allow multiple concurrent requests.
       LPR_ONNX_INTRA_OP_THREADS: "4"
 
-      # 🔧 NEW — only takes effect if you deploy the patched main.py
-      # that offloads recognize() to a thread pool behind a semaphore.
-      # Defaults to cpu_count // LPR_ONNX_INTRA_OP_THREADS if unset
-      # (28 // 4 = 7 here). Set explicitly once you've picked a final
-      # thread count via benchmarking, so this doesn't silently change
-      # if you tune the thread count later without revisiting this.
+      # ============================================================
+      # Recognition concurrency
+      # ============================================================
+      # Only applies if your patched main.py uses this setting.
+      #
+      # 28 CPU cores / 4 threads ~= 7 concurrent recognitions.
       LPR_MAX_CONCURRENT_RECOGNITIONS: "7"
 
       # ============================================================
-      # Runtime
+      # Runtime / Input Resolution
       # ============================================================
-      LPR_MAX_INPUT_DIMENSION: "100"
+      # IMPORTANT:
+      # 100 was much too small.
+      #
+      # 1280 means:
+      #
+      # 720p  -> stays 1280x720
+      # 1080p -> becomes 1280x720-ish
+      # 1440p -> becomes <=1280 on long side
+      #
+      # OCR still uses the original-resolution crop.
+      LPR_MAX_INPUT_DIMENSION: "1280"
 
       # ============================================================
       # Temporal voting
@@ -143,13 +150,16 @@ services:
       LPR_PLATE_VOTING_WINDOW_SECONDS: "5"
 
       # ============================================================
-      # Ovelay Region
+      # CCTV Overlay Ignore Regions
       # ============================================================
-      LPR_DETECTION_IGNORE_OVERLAY_REGIONS: "0.76,0.01,0.21,0.04"
-    restart: unless-stopped
-
-    # Give container access to NVIDIA GPU
-    gpus: all
+      #
+      # top-right timestamp:
+      # x=0.76 y=0.01 w=0.21 h=0.04
+      #
+      # bottom-left camera label:
+      # x=0.00 y=0.94 w=0.35 h=0.06
+      #
+      LPR_DETECTION_IGNORE_OVERLAY_REGIONS: "0.76,0.01,0.21,0.04;0.0,0.94,0.35,0.06"
 
     networks:
       - lpr-network
