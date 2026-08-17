@@ -22,111 +22,29 @@ services:
       LPR_API_KEY: "Zkajsasasauha"
 
       # ============================================================
-      # Detection
+      # IMPORTANT
       # ============================================================
-      # Keep detector permissive.
-      LPR_DETECTOR_MIN_CONF: "0.05"
-      LPR_MIN_RESULT_DETECTOR_CONF: "0.05"
-
-      # Add +5 percentage points to reported detector confidence.
       #
-      # 0.84 -> 0.89
-      # 0.85 -> 0.90
+      # DO NOT put detector/OCR configuration here.
       #
-      LPR_DETECTOR_CONFIDENCE_BOOST: "0.05"
-
+      # They will come from app/config.py:
+      #
+      # LPR_DETECTOR_MODEL
+      # LPR_DETECTOR_MIN_CONF
+      # LPR_MIN_RESULT_DETECTOR_CONF
+      # LPR_OCR_MODEL
+      # LPR_MIN_OCR_CONF
+      # LPR_ENABLE_TILED_DETECTION
+      # LPR_SECOND_STAGE_ROI_ENABLED
+      # LPR_CAMERA_CROP_ENABLED
+      # LPR_ONNX_DEVICE
+      # LPR_DETECTOR_CONFIDENCE_BOOST
+      #
       # ============================================================
-      # Detection candidates
-      # ============================================================
-      LPR_MAX_DETECTION_CANDIDATES: "2"
-
-      # ============================================================
-      # Tiled Detection
-      # ============================================================
-      LPR_ENABLE_TILED_DETECTION: "true"
-      LPR_TILED_DETECTION_CONF: "0.65"
-      LPR_TILED_DETECTION_MIN_WIDTH_RATIO: "0.18"
-
-      # ============================================================
-      # Detection ROI
-      # ============================================================
-      LPR_DETECTION_ROI: ""
-      LPR_DETECTION_ROI_FALLBACK_FULL_FRAME: "true"
-
-      # ============================================================
-      # Detection -> OCR crop
-      # ============================================================
-      LPR_OCR_CROP_PADDING_X: "0.12"
-      LPR_OCR_CROP_PADDING_Y: "0.20"
-      LPR_OCR_CROP_MIN_PADDING_PX: "2"
-
-      # ============================================================
-      # Fast detection
-      # ============================================================
-      LPR_DETECTION_FAST_CONFIDENCE: "0.85"
-      LPR_DETECTION_FAST_MIN_WIDTH_RATIO: "0.18"
-
-      # ============================================================
-      # OCR
-      # ============================================================
-      LPR_OCR_MODEL: "cct-s-v2-global-model"
-
-      LPR_MIN_OCR_CONF: "0.70"
-
-      LPR_OCR_PREPROCESSING_VARIANTS: "4"
-      LPR_REQUIRE_INDONESIA_PLATE_FORMAT: "true"
-
-      LPR_OCR_MIN_CROP_WIDTH: "512"
-
-      LPR_OCR_UPSCALE_UNSHARP_AMOUNT: "0.5"
-      LPR_OCR_UPSCALE_UNSHARP_SIGMA: "1.0"
-
-      LPR_OCR_CONFUSION_CONFIDENCE_THRESHOLD: "0.70"
-
-      # ============================================================
-      # Fallbacks
-      # ============================================================
-      LPR_ENABLE_GLARE_FALLBACK: "true"
-      LPR_ENABLE_GRAYSCALE_FALLBACK: "true"
-      LPR_ENABLE_FRAGMENT_RECOVERY: "true"
-
-      # ============================================================
-      # Upload
-      # ============================================================
-      LPR_MAX_UPLOAD_MB: "20"
-
-      # ============================================================
-      # GPU / ONNX Runtime
-      # ============================================================
-      # IMPORTANT:
-      # Use GPU for this server.
-      LPR_ONNX_DEVICE: "cpu"
-
-      LPR_ONNX_INTRA_OP_THREADS: "4"
-
-      # ============================================================
-      # Recognition concurrency
-      # ============================================================
-      LPR_MAX_CONCURRENT_RECOGNITIONS: "7"
-
-      # ============================================================
-      # Runtime / Input Resolution
-      # ============================================================
-      LPR_MAX_INPUT_DIMENSION: "1280"
-
-      # ============================================================
-      # Temporal voting
-      # ============================================================
-      LPR_PLATE_VOTING_REQUIRED_OBSERVATIONS: "3"
-      LPR_PLATE_VOTING_WINDOW_SECONDS: "5"
-
-      # ============================================================
-      # CCTV Overlay Ignore Regions
-      # ============================================================
-      LPR_DETECTION_IGNORE_OVERLAY_REGIONS: "0.76,0.01,0.21,0.04;0.0,0.94,0.35,0.06"
 
     networks:
       - lpr-network
+
 
 networks:
   lpr-network:
