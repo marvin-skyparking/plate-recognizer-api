@@ -114,7 +114,7 @@ services:
       # cpu / gpu / both / cuda / auto
       #
       # Use gpu explicitly for this server.
-      LPR_ONNX_DEVICE: "gpu"
+      LPR_ONNX_DEVICE: "cpu"
 
       # Per inference call.
       # Keep low enough to allow multiple concurrent requests.
