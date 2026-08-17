@@ -2,7 +2,7 @@ version: "3.8"
 
 services:
   platerecognizer:
-    image: yudasiskariot/lpr-api:v1.1.4
+    image: yudasiskariot/lpr-api:v1.1.5
     container_name: platerecognizer
 
     ports:
@@ -24,24 +24,25 @@ services:
       # ============================================================
       # Detection
       # ============================================================
-      LPR_DETECTOR_MODEL: "yolo-v9-t-256-license-plate-end2end"
-
       # Keep detector permissive.
-      # OCR confidence + Indonesia plate format are the final gates.
-      LPR_DETECTOR_MIN_CONF: "0.20"
-      LPR_MIN_RESULT_DETECTOR_CONF: "0.25"
+      LPR_DETECTOR_MIN_CONF: "0.05"
+      LPR_MIN_RESULT_DETECTOR_CONF: "0.05"
+
+      # Add +5 percentage points to reported detector confidence.
+      #
+      # 0.84 -> 0.89
+      # 0.85 -> 0.90
+      #
+      LPR_DETECTOR_CONFIDENCE_BOOST: "0.05"
 
       # ============================================================
       # Detection candidates
       # ============================================================
-      # 2 gives a second candidate when the top detector box
-      # is not actually the license plate.
       LPR_MAX_DETECTION_CANDIDATES: "2"
 
       # ============================================================
       # Tiled Detection
       # ============================================================
-      # Useful for wide 1080p/1440p CCTV where the plate is small.
       LPR_ENABLE_TILED_DETECTION: "true"
       LPR_TILED_DETECTION_CONF: "0.65"
       LPR_TILED_DETECTION_MIN_WIDTH_RATIO: "0.18"
@@ -49,12 +50,6 @@ services:
       # ============================================================
       # Detection ROI
       # ============================================================
-      # Empty = full-frame detection.
-      #
-      # If all cameras have the same framing, you can later set:
-      # LPR_DETECTION_ROI: "x,y,width,height"
-      #
-      # Keep fallback enabled because you have ~30 gates/cameras.
       LPR_DETECTION_ROI: ""
       LPR_DETECTION_ROI_FALLBACK_FULL_FRAME: "true"
 
@@ -76,21 +71,16 @@ services:
       # ============================================================
       LPR_OCR_MODEL: "cct-s-v2-global-model"
 
-      # Real OCR quality gate
       LPR_MIN_OCR_CONF: "0.70"
 
       LPR_OCR_PREPROCESSING_VARIANTS: "4"
       LPR_REQUIRE_INDONESIA_PLATE_FORMAT: "true"
 
-      # IMPORTANT:
-      # Small detector crops are upscaled before OCR.
       LPR_OCR_MIN_CROP_WIDTH: "512"
 
-      # Sharpen after upscaling
       LPR_OCR_UPSCALE_UNSHARP_AMOUNT: "0.5"
       LPR_OCR_UPSCALE_UNSHARP_SIGMA: "1.0"
 
-      # Character confusion correction
       LPR_OCR_CONFUSION_CONFIDENCE_THRESHOLD: "0.70"
 
       # ============================================================
@@ -108,39 +98,20 @@ services:
       # ============================================================
       # GPU / ONNX Runtime
       # ============================================================
-      # gpu = CUDA first, CPU fallback.
-      #
-      # Your build_onnx_providers() supports:
-      # cpu / gpu / both / cuda / auto
-      #
-      # Use gpu explicitly for this server.
-      LPR_ONNX_DEVICE: "cpu"
+      # IMPORTANT:
+      # Use GPU for this server.
+      LPR_ONNX_DEVICE: "gpu"
 
-      # Per inference call.
-      # Keep low enough to allow multiple concurrent requests.
       LPR_ONNX_INTRA_OP_THREADS: "4"
 
       # ============================================================
       # Recognition concurrency
       # ============================================================
-      # Only applies if your patched main.py uses this setting.
-      #
-      # 28 CPU cores / 4 threads ~= 7 concurrent recognitions.
       LPR_MAX_CONCURRENT_RECOGNITIONS: "7"
 
       # ============================================================
       # Runtime / Input Resolution
       # ============================================================
-      # IMPORTANT:
-      # 100 was much too small.
-      #
-      # 1280 means:
-      #
-      # 720p  -> stays 1280x720
-      # 1080p -> becomes 1280x720-ish
-      # 1440p -> becomes <=1280 on long side
-      #
-      # OCR still uses the original-resolution crop.
       LPR_MAX_INPUT_DIMENSION: "1280"
 
       # ============================================================
@@ -152,13 +123,6 @@ services:
       # ============================================================
       # CCTV Overlay Ignore Regions
       # ============================================================
-      #
-      # top-right timestamp:
-      # x=0.76 y=0.01 w=0.21 h=0.04
-      #
-      # bottom-left camera label:
-      # x=0.00 y=0.94 w=0.35 h=0.06
-      #
       LPR_DETECTION_IGNORE_OVERLAY_REGIONS: "0.76,0.01,0.21,0.04;0.0,0.94,0.35,0.06"
 
     networks:
