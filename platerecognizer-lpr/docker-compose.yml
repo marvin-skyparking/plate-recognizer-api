@@ -100,7 +100,7 @@ services:
       # ============================================================
       # IMPORTANT:
       # Use GPU for this server.
-      LPR_ONNX_DEVICE: "gpu"
+      LPR_ONNX_DEVICE: "cpu"
 
       LPR_ONNX_INTRA_OP_THREADS: "4"
 
