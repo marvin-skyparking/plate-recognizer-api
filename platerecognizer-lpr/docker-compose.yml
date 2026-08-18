@@ -10,6 +10,10 @@ services:
 
     restart: unless-stopped
 
+    volumes:
+      - /mnt/data/lpr/platerecognizer:/data
+
+
     # ============================================================
     # NVIDIA GPU
     # ============================================================
