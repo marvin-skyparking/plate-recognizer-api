@@ -15,7 +15,7 @@ services:
       MINIO_ROOT_PASSWORD: lpradmin123
 
     volumes:
-      - /mnt/data/minio:/data
+      - minio_lpr_data:/data
 
     command: server /data --console-address ":9001"
 
