@@ -2,18 +2,49 @@ version: "3.8"
 
 services:
   platerecognizer:
-    image: yudasiskariot/lpr-api:v1.0.1
+    image: yudasiskariot/lpr-api:v1.1.8
     container_name: platerecognizer
+
     ports:
       - "8080:8000"
-    environment:
-      LPR_API_KEY: "Zkajsasasauha"
-      LPR_DETECTOR_MIN_CONF: "0.35"
-      LPR_MIN_OCR_CONF: "0.60"
-      LPR_MAX_UPLOAD_MB: "10"
+
     restart: unless-stopped
+
+    # ============================================================
+    # NVIDIA GPU
+    # ============================================================
+    # gpus: all
+
+    environment:
+      # ============================================================
+      # API
+      # ============================================================
+      LPR_API_KEY: "Zkajsasasauha"
+
+      # ============================================================
+      # IMPORTANT
+      # ============================================================
+      #
+      # DO NOT put detector/OCR configuration here.
+      #
+      # They will come from app/config.py:
+      #
+      # LPR_DETECTOR_MODEL
+      # LPR_DETECTOR_MIN_CONF
+      # LPR_MIN_RESULT_DETECTOR_CONF
+      # LPR_OCR_MODEL
+      # LPR_MIN_OCR_CONF
+      # LPR_ENABLE_TILED_DETECTION
+      # LPR_SECOND_STAGE_ROI_ENABLED
+      # LPR_CAMERA_CROP_ENABLED
+      # LPR_ONNX_DEVICE
+      # LPR_DETECTOR_CONFIDENCE_BOOST
+      #
+      # ============================================================
+
     networks:
       - lpr-network
+
 
 networks:
   lpr-network:
