@@ -2,6 +2,7 @@ package utils
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"sync/atomic"
 	"time"
@@ -18,24 +19,29 @@ func isHealthy(base string) bool {
 		Timeout: 2 * time.Second,
 	}
 
-	// Plate Recognizer does NOT have /health
-	// Use HEAD or GET to plate-reader endpoint
+	url := base + "/v1/recognize"
+
+	fmt.Printf("[LPR HEALTH] checking: %s\n", url)
+
 	req, err := http.NewRequest(
 		http.MethodHead,
-		base+"/v1/recognize",
+		url,
 		nil,
 	)
 	if err != nil {
+		fmt.Printf("[LPR HEALTH] request creation error: %v\n", err)
 		return false
 	}
 
 	resp, err := client.Do(req)
 	if err != nil {
+		fmt.Printf("[LPR HEALTH] HTTP error: %v\n", err)
 		return false
 	}
 	defer resp.Body.Close()
 
-	// 200 / 401 / 405 all mean "service is alive"
+	fmt.Printf("[LPR HEALTH] status: %d\n", resp.StatusCode)
+
 	return resp.StatusCode < 500
 }
 
