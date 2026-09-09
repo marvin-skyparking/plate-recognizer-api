@@ -10,7 +10,7 @@ import (
 var rrCounter uint64
 
 var endpoints = []string{
-	"http://localhost:8000",
+	"http://localhost:8080",
 }
 
 func isHealthy(base string) bool {
