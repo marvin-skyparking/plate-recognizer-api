@@ -1,8 +1,6 @@
-version: "3.8"
-
 services:
   minio:
-    image: quay.io/minio/aistor/minio:RELEASE.2026-08-07T18-34-35Z
+    image: quay.io/minio/minio:latest
     container_name: lpr-minio
     restart: unless-stopped
 
@@ -26,17 +24,23 @@ services:
         max-file: "3"
 
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      test:
+        [
+          "CMD",
+          "curl",
+          "-f",
+          "http://localhost:9000/minio/health/live"
+        ]
       interval: 30s
       timeout: 20s
       retries: 3
 
     networks:
-      - lpr-network   # just list the network name
+      - lpr-network
 
 volumes:
   minio_lpr_data:
 
 networks:
   lpr-network:
-    external: true   # external network defined at top level
+    external: true
