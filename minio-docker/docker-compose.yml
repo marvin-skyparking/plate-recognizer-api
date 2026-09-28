@@ -1,6 +1,6 @@
 services:
   minio:
-    image: minio/minio:RELEASE.2025-09-07T16-13-09Z
+    image: local/minio:RELEASE.2025-09-07T16-13-09Z
     container_name: lpr-minio
     restart: unless-stopped
 
@@ -21,6 +21,12 @@ services:
       - --console-address
       - ":9001"
 
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
     healthcheck:
       test:
         - CMD
@@ -31,12 +37,6 @@ services:
       timeout: 20s
       retries: 3
       start_period: 10s
-
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
 
     networks:
       - lpr-network
