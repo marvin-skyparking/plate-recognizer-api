@@ -2,7 +2,7 @@ version: "3.8"
 
 services:
   minio:
-    image: quay.io/minio/minio:latest
+    image: quay.io/minio/aistor/minio:RELEASE.2026-08-07T18-34-35Z
     container_name: lpr-minio
     restart: unless-stopped
 
