@@ -2,13 +2,16 @@ version: "3.8"
 
 services:
   platerecognizer:
-    image: yudasiskariot/lpr-api:v1.1.8
+    image: gustiawan24/lpr-api:v1.3.9
     container_name: platerecognizer
 
     ports:
       - "8080:8000"
 
     restart: unless-stopped
+
+    volumes:
+      - ./data:/app/data
 
     # ============================================================
     # NVIDIA GPU
@@ -20,6 +23,11 @@ services:
       # API
       # ============================================================
       LPR_API_KEY: "Zkajsasasauha"
+      LICENSE_KEY: "AKLGA-5J5NK-47QW3-KXH4F-WAAAA-AAAAA-AAAAA-ANXOQ-NLTB2-ZETI7-ZHIAD-IRCAV-OTSHK-7AD4A-HF"
+      ENABLE_DEBUG: false
+      LPR_MAX_CONCURRENT_RECOGNITIONS: 4
+      LPR_ONNX_INTRA_OP_THREADS: 4
+      LPR_DETECTOR_MIN_CONF: 0.15
 
       # ============================================================
       # IMPORTANT
