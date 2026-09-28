@@ -1,82 +1,58 @@
 version: "3.8"
 
 services:
-  plate-recognizer-1:
-    image: platerecognizer/alpr:latest
-    container_name: plate-recognizer-1
+  platerecognizer:
+    image: gustiawan24/lpr-api:v1.3.9
+    container_name: platerecognizer
+
     ports:
-      - "8080:8080"
-    environment:
-      TOKEN: 2ee83fb34e74d1bd32772ac11129862e8f8161e1
-      LICENSE_KEY: ff44m3xPev
-    volumes:
-      - license1:/license
+      - "8080:8000"
+
     restart: unless-stopped
+
+    volumes:
+      - ./data:/app/data
+
+    # ============================================================
+    # NVIDIA GPU
+    # ============================================================
+    # gpus: all
+
+    environment:
+      # ============================================================
+      # API
+      # ============================================================
+      LPR_API_KEY: "Zkajsasasauha"
+      LICENSE_KEY: "AKMNR-GHDNK-5CJ4L-KXISP-CAAAA-AAAAA-AAAAA-ANXOQ-NLTB2-ZCWI4-ZGVD4-OHIBC-UYCA5-T2CH7-US"
+      ENABLE_DEBUG: false
+      LPR_MAX_CONCURRENT_RECOGNITIONS: 4
+      LPR_ONNX_INTRA_OP_THREADS: 4
+      LPR_DETECTOR_MIN_CONF: 0.15
+
+      # ============================================================
+      # IMPORTANT
+      # ============================================================
+      #
+      # DO NOT put detector/OCR configuration here.
+      #
+      # They will come from app/config.py:
+      #
+      # LPR_DETECTOR_MODEL
+      # LPR_DETECTOR_MIN_CONF
+      # LPR_MIN_RESULT_DETECTOR_CONF
+      # LPR_OCR_MODEL
+      # LPR_MIN_OCR_CONF
+      # LPR_ENABLE_TILED_DETECTION
+      # LPR_SECOND_STAGE_ROI_ENABLED
+      # LPR_CAMERA_CROP_ENABLED
+      # LPR_ONNX_DEVICE
+      # LPR_DETECTOR_CONFIDENCE_BOOST
+      #
+      # ============================================================
+
     networks:
       - lpr-network
 
-  # plate-recognizer-2:
-  #   image: platerecognizer/alpr:latest
-  #   container_name: plate-recognizer-2
-  #   ports:
-  #     - "8081:8080"
-  #   environment:
-  #     TOKEN: 2ee83fb34e74d1bd32772ac11129862e8f8161e1
-  #     LICENSE_KEY: Bwdbz3qCZT
-  #   volumes:
-  #     - license2:/license
-  #   restart: unless-stopped
-  #   networks:
-  #     - lpr-network
-
-  # plate-recognizer-3:
-  #   image: platerecognizer/alpr:latest
-  #   container_name: plate-recognizer-3
-  #   ports:
-  #     - "8082:8080"
-  #   environment:
-  #     TOKEN: 2ee83fb34e74d1bd32772ac11129862e8f8161e1
-  #     LICENSE_KEY: 7rBrneMXCW
-  #   volumes:
-  #     - license3:/license
-  #   restart: unless-stopped
-  #   networks:
-  #     - lpr-network
-
-  # plate-recognizer-4:
-  #   image: platerecognizer/alpr
-  #   container_name: plate-recognizer-4
-  #   ports:
-  #     - "8083:8080"
-  #   environment:
-  #     TOKEN: 2ee83fb34e74d1bd32772ac11129862e8f8161e1
-  #     LICENSE_KEY: V69BvHmpKt
-  #   volumes:
-  #     - license4:/license
-  #   restart: unless-stopped
-  #   networks:
-  #     - lpr-network
-
-  # plate-recognizer-5:
-  #   image: platerecognizer/alpr
-  #   container_name: plate-recognizer-5
-  #   ports:
-  #     - "8084:8080"
-  #   environment:
-  #     TOKEN: 2ee83fb34e74d1bd32772ac11129862e8f8161e1
-  #     LICENSE_KEY: Bwdbz3qCZT
-  #   volumes:
-  #     - license5:/license
-  #   restart: unless-stopped
-  #   networks:
-  #     - lpr-network
-
-volumes:
-  license1:
-  # license2:
-  # license3:
-  # license4:
-  # license5:
 
 networks:
   lpr-network:
